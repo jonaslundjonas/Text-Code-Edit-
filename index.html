@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text&Code Edit+</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CodeMirror 5 Core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <!-- CodeMirror Themes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+    
+    <!-- CodeMirror Addons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
+    <!-- Addons for Tag Matching/Closing (Fixes HTML editing feel) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Overrides for CodeMirror to fit the container perfectly */
+        .CodeMirror {
+            height: 100%;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Smooth scrolling for the whole page */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Rich Text Editor Styling */
+        #rich-text-editor {
+            outline: none;
+            overflow-y: auto;
+            padding: 40px; /* More padding for a document feel */
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        #rich-text-editor ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em; }
+        #rich-text-editor ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em; }
+        #rich-text-editor a { color: #3b82f6; text-decoration: underline; }
+        #rich-text-editor p { margin-bottom: 1em; }
+
+        /* Document Headings Styling (Visual Map) */
+        #rich-text-editor h1 { font-size: 2.25em; font-weight: 700; line-height: 1.2; margin-bottom: 0.5em; } /* Title */
+        #rich-text-editor h2 { font-size: 1.5em; font-weight: 400; color: #6b7280; margin-bottom: 1em; } /* Subtitle */
+        #rich-text-editor h3 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 1 */
+        #rich-text-editor h4 { font-size: 1.25em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 2 */
+        #rich-text-editor h5 { font-size: 1.1em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; text-transform: uppercase; color: #6b7280; } /* Heading 3 */
+        
+        /* Dark mode overrides for RTF content */
+        #rich-text-editor.dark-mode a { color: #93c5fd; }
+        #rich-text-editor.dark-mode h2 { color: #9ca3af; } /* Lighter gray for subtitle in dark mode */
+        #rich-text-editor.dark-mode h5 { color: #9ca3af; }
+
+        /* Fix for Text Selection Visibility in Dark Mode */
+        #rich-text-editor.dark-mode ::selection {
+            background-color: #0ea5e9; /* Sky-500 - Brighter and more visible than standard blue */
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 text-neutral-200 flex flex-col h-screen relative">
+
+    <!-- Navbar / Toolbar -->
+    <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col">
+        <!-- Top Row: File Controls -->
+        <div class="flex items-center justify-between p-2 px-4">
+            
+            <!-- Left: Logo & File Controls -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg">
+                    <i data-lucide="code-2"></i>
+                    <span>Text&Code Edit+</span>
+                </div>
+
+                <div class="h-6 w-px bg-neutral-600 mx-2"></div>
+
+                <div class="flex items-center gap-2 bg-neutral-700 rounded-md px-3 py-1 border border-neutral-600">
+                    <i data-lucide="file" class="w-4 h-4 text-neutral-400"></i>
+                    <input type="text" id="filename-input" value="untitled.txt" class="bg-transparent border-none outline-none text-sm w-48 text-white placeholder-neutral-500" placeholder="Filename...">
+                </div>
+
+                <button onclick="document.getElementById('file-input').click()" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Open File">
+                    <i data-lucide="folder-open" class="w-5 h-5 text-yellow-400"></i>
+                </button>
+                <input type="file" id="file-input" class="hidden">
+
+                <button id="save-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Save File">
+                    <i data-lucide="save" class="w-5 h-5 text-green-400"></i>
+                </button>
+
+                <div class="h-6 w-px bg-neutral-600 mx-1"></div>
+
+                <!-- Undo / Redo -->
+                <button id="undo-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Undo (Ctrl+Z)">
+                    <i data-lucide="undo-2" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="redo-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Redo (Ctrl+Y)">
+                    <i data-lucide="redo-2" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+
+                <div class="h-6 w-px bg-neutral-600 mx-1"></div>
+
+                <!-- Clipboard Controls -->
+                <button id="cut-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Cut">
+                    <i data-lucide="scissors" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="copy-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Copy">
+                    <i data-lucide="copy" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="paste-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Paste">
+                    <i data-lucide="clipboard" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+            </div>
+
+            <!-- Center: Language & Settings -->
+            <div class="flex items-center gap-3">
+                <select id="language-select" class="bg-neutral-700 text-sm border border-neutral-600 rounded px-2 py-1 outline-none focus:border-neutral-500 max-w-[160px]">
+                    <optgroup label="Editors">
+                        <option value="null">Plain Text (.txt)</option>
+                        <option value="richtext">Rich Text (.rtf)</option>
+                    </optgroup>
+                    <optgroup label="Web">
+                        <option value="text/javascript">JavaScript</option>
+                        <option value="text/html">HTML</option>
+                        <option value="text/css">CSS</option>
+                        <option value="application/x-httpd-php">PHP</option>
+                    </optgroup>
+                    <optgroup label="System/App">
+                        <option value="text/x-c++src">C++</option>
+                        <option value="text/x-csharp">C#</option>
+                        <option value="text/x-java">Java</option>
+                        <option value="text/x-python">Python</option>
+                        <option value="text/x-go">Go</option>
+                        <option value="text/x-rustsrc">Rust</option>
+                        <option value="text/x-ruby">Ruby</option>
+                    </optgroup>
+                    <optgroup label="Scripting">
+                        <option value="text/x-sh">Shell / Bash</option>
+                        <option value="application/x-powershell">PowerShell</option>
+                        <option value="text/x-lua">Lua</option>
+                        <option value="text/x-markdown">Markdown</option>
+                    </optgroup>
+                    <optgroup label="Data">
+                        <option value="application/json">JSON</option>
+                        <option value="text/csv">CSV</option>
+                        <option value="application/xml">XML</option>
+                        <option value="text/x-sql">SQL</option>
+                        <option value="text/x-yaml">YAML</option>
+                    </optgroup>
+                </select>
+
+                <select id="theme-select" class="bg-neutral-700 text-sm border border-neutral-600 rounded px-2 py-1 outline-none focus:border-neutral-500">
+                    <option value="material-darker">Dark (Material)</option>
+                    <option value="eclipse">Light (Eclipse)</option>
+                </select>
+
+                <!-- Format Button -->
+                <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code">
+                    <i data-lucide="wand-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-2">
+                <button id="preview-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition hidden">
+                    <i data-lucide="eye" class="w-4 h-4"></i> Preview
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Rich Text Toolbar (Hidden by default) -->
+        <div id="richtext-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-1 flex-wrap">
+            
+            <!-- Text Style / Headings Dropdown -->
+            <div class="flex items-center gap-2 mr-2">
+                <select id="text-style-select" class="bg-neutral-600 text-white text-sm rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-32">
+                    <option value="P">Normal Text</option>
+                    <option value="H1">Title</option>
+                    <option value="H2">Subtitle</option>
+                    <option value="H3">Heading 1</option>
+                    <option value="H4">Heading 2</option>
+                    <option value="H5">Heading 3</option>
+                </select>
+            </div>
+
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+
+            <!-- Text Style -->
+            <button id="btn-bold" onmousedown="event.preventDefault();" onclick="formatDoc('bold')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bold"><i data-lucide="bold" class="w-4 h-4"></i></button>
+            <button id="btn-italic" onmousedown="event.preventDefault();" onclick="formatDoc('italic')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Italic"><i data-lucide="italic" class="w-4 h-4"></i></button>
+            <button id="btn-underline" onmousedown="event.preventDefault();" onclick="formatDoc('underline')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Underline"><i data-lucide="underline" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Alignment -->
+            <button id="btn-align-left" onmousedown="event.preventDefault();" onclick="formatDoc('justifyLeft')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Left"><i data-lucide="align-left" class="w-4 h-4"></i></button>
+            <button id="btn-align-center" onmousedown="event.preventDefault();" onclick="formatDoc('justifyCenter')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Center"><i data-lucide="align-center" class="w-4 h-4"></i></button>
+            <button id="btn-align-right" onmousedown="event.preventDefault();" onclick="formatDoc('justifyRight')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Right"><i data-lucide="align-right" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Lists -->
+            <button id="btn-list-ul" onmousedown="event.preventDefault();" onclick="formatDoc('insertUnorderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bullet List"><i data-lucide="list" class="w-4 h-4"></i></button>
+            <button id="btn-list-ol" onmousedown="event.preventDefault();" onclick="formatDoc('insertOrderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Numbered List"><i data-lucide="list-ordered" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Link -->
+            <button onmousedown="event.preventDefault();" onclick="openLinkModal()" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Link"><i data-lucide="link" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Font Size Dropdown -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-neutral-400 font-bold uppercase">Size</span>
+                <select id="font-size-select" class="bg-neutral-600 text-white text-xs rounded px-1 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500">
+                    <option value="" disabled selected>--</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="26">26</option>
+                    <option value="28">28</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                    <option value="72">72</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Editor Container -->
+        <div id="editor-container" class="flex-1 relative w-full h-full bg-white">
+            <!-- CodeMirror Instance (Code Mode) -->
+            <div id="cm-wrapper" class="h-full w-full">
+                <textarea id="code-editor"></textarea>
+            </div>
+
+            <!-- Rich Text Instance (Visual Mode) -->
+            <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
+        </div>
+
+        <!-- Preview Pane (Hidden by default, used for HTML) -->
+        <div id="preview-pane" class="hidden flex-1 border-l border-neutral-700 bg-white relative">
+            <div class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Browser Preview</div>
+            <iframe id="preview-frame" class="w-full h-full border-none"></iframe>
+        </div>
+    </main>
+
+    <!-- Footer / Status Bar -->
+    <footer class="bg-neutral-800 border-t border-neutral-700 text-xs text-neutral-400 p-1 px-4 flex justify-between items-center select-none">
+        <div class="flex gap-4">
+            <span id="cursor-pos">Ln 1, Col 1</span>
+            <span id="doc-stats">0 Lines, 0 Chars</span>
+        </div>
+        
+        <div class="text-neutral-500 opacity-75">
+            Created by Jonas Lund 2025
+        </div>
+
+        <div>
+            <span>UTF-8</span>
+            <span class="mx-2">|</span>
+            <span id="mode-display">Plain Text</span>
+        </div>
+    </footer>
+
+    <!-- Link Modal -->
+    <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-96">
+            <h3 class="text-white text-lg font-bold mb-4">Insert Link</h3>
+            <input type="text" id="link-url-input" class="w-full bg-neutral-700 text-white border border-neutral-600 rounded px-3 py-2 mb-4 focus:outline-none focus:border-blue-500" placeholder="https://example.com">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLinkModal()" class="px-4 py-2 text-neutral-400 hover:text-white transition">Cancel</button>
+                <button onclick="insertLink()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Insert</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- CodeMirror Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    
+    <!-- CodeMirror Dependencies (Required by some modes like Rust) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+
+    <!-- CodeMirror Modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+    <!-- New Modes for Expanded Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/powershell/powershell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
+    
+    <!-- CodeMirror Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.js"></script>
+    
+    <!-- Addons for HTML Enhancements -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
+
+    <script>
+        // --- Initialization ---
+        lucide.createIcons();
+
+        // 1. Defined Save Configuration for Extensions
+        const saveConfig = {
+            // Web
+            'text/javascript': { ext: '.js', mime: 'text/javascript' },
+            'text/html': { ext: '.html', mime: 'text/html' },
+            'text/css': { ext: '.css', mime: 'text/css' },
+            'application/x-httpd-php': { ext: '.php', mime: 'application/x-httpd-php' },
+            
+            // System
+            'text/x-c++src': { ext: '.cpp', mime: 'text/plain' },
+            'text/x-csharp': { ext: '.cs', mime: 'text/plain' },
+            'text/x-java': { ext: '.java', mime: 'text/plain' },
+            'text/x-python': { ext: '.py', mime: 'text/x-python' },
+            'text/x-go': { ext: '.go', mime: 'text/plain' },
+            'text/x-rustsrc': { ext: '.rs', mime: 'text/plain' },
+            'text/x-ruby': { ext: '.rb', mime: 'text/plain' },
+
+            // Scripting
+            'text/x-sh': { ext: '.sh', mime: 'application/x-sh' },
+            'application/x-powershell': { ext: '.ps1', mime: 'text/plain' },
+            'text/x-lua': { ext: '.lua', mime: 'text/plain' },
+            'text/x-markdown': { ext: '.md', mime: 'text/markdown' },
+
+            // Data
+            'application/xml': { ext: '.xml', mime: 'application/xml' },
+            'application/json': { ext: '.json', mime: 'application/json' },
+            'text/csv': { ext: '.csv', mime: 'text/csv' },
+            'text/x-sql': { ext: '.sql', mime: 'text/plain' },
+            'text/x-yaml': { ext: '.yaml', mime: 'text/plain' },
+
+            // Editors
+            'richtext': { ext: '.rtf', mime: 'text/html' },
+            'null': { ext: '.txt', mime: 'text/plain' }
+        };
+
+        // Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            lineNumbers: true,
+            mode: 'null',
+            theme: 'material-darker',
+            autoCloseBrackets: true,
+            autoCloseTags: true,
+            matchBrackets: true,
+            matchTags: {bothTags: true},
+            styleActiveLine: true,
+            lineWrapping: true,
+            scrollbarStyle: "simple",
+            indentUnit: 4,
+            tabSize: 4
+        });
+
+        // Set default content
+        editor.setValue(`Welcome to Text&Code Edit+!
+
+Text&Code Edit+ is a versatile editor for both coding and document creation.
+
+==============================================
+QUICK START GUIDE
+==============================================
+
+1. SELECTING A MODE (Top Dropdown)
+   • Plain Text: For standard notes and logs.
+   • Rich Text (.rtf): Full document editing with Titles, Headings, Fonts, Lists, and Links.
+   • Code Modes: Supports 20+ languages (JS, C++, Java, Python, Rust, SQL, etc.) with syntax highlighting.
+   • Data Modes: Specialized handling for CSV, JSON, XML, and YAML.
+
+2. TOOLBAR CONTROLS
+   • Undo/Redo: Easily step back or forward through your changes in any mode.
+   • Clipboard: Dedicated Cut, Copy, and Paste buttons for quick editing.
+   • Formatting (RTF): Bold, Italic, Underline, Alignment, Lists, and Font Sizing.
+
+3. INTELLIGENT SAVING
+   • The editor automatically detects your file type.
+   • "Python" mode saves as ".py", "Rich Text" as ".rtf", "CSV" as ".csv", etc.
+
+4. CODING TOOLS
+   • Magic Wand: Formats and indents your code instantly.
+   • HTML Preview: Click the "Eye" icon to see your code rendered live.
+   • Auto-Complete: Brackets () and Tags <div> close automatically.
+
+5. THEMES
+   • Toggle between Dark (Material) and Light (Eclipse) themes via the dropdown.
+
+Start by typing below or use the "Folder" icon to open an existing file.`);
+
+        // --- DOM Elements ---
+        const filenameInput = document.getElementById('filename-input');
+        const fileInput = document.getElementById('file-input');
+        const languageSelect = document.getElementById('language-select');
+        const themeSelect = document.getElementById('theme-select');
+        const saveBtn = document.getElementById('save-btn');
+        const previewBtn = document.getElementById('preview-btn');
+        const previewPane = document.getElementById('preview-pane');
+        const previewFrame = document.getElementById('preview-frame');
+        const cursorPosEl = document.getElementById('cursor-pos');
+        const docStatsEl = document.getElementById('doc-stats');
+        const modeDisplayEl = document.getElementById('mode-display');
+        const formatBtn = document.getElementById('format-btn');
+        
+        // Rich Text Elements
+        const cmWrapper = document.getElementById('cm-wrapper');
+        const richTextEditor = document.getElementById('rich-text-editor');
+        const richTextToolbar = document.getElementById('richtext-toolbar');
+        const editorContainer = document.getElementById('editor-container');
+        const linkModal = document.getElementById('link-modal');
+        const linkInput = document.getElementById('link-url-input');
+        const fontSizeSelect = document.getElementById('font-size-select');
+        const textStyleSelect = document.getElementById('text-style-select');
+        const cutBtn = document.getElementById('cut-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const pasteBtn = document.getElementById('paste-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        let savedSelectionRange = null;
+
+        // --- Theme Logic ---
+        function applyTheme(theme) {
+            editor.setOption('theme', theme);
+            
+            if (theme === 'material-darker') {
+                richTextEditor.classList.remove('bg-white', 'text-black');
+                richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                editorContainer.classList.remove('bg-white');
+                editorContainer.classList.add('bg-neutral-800');
+            } else {
+                richTextEditor.classList.remove('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                richTextEditor.classList.add('bg-white', 'text-black');
+                editorContainer.classList.remove('bg-neutral-800');
+                editorContainer.classList.add('bg-white');
+            }
+        }
+
+        // --- Undo / Redo Logic ---
+        undoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('undo');
+            } else {
+                editor.undo();
+                editor.focus();
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('redo');
+            } else {
+                editor.redo();
+                editor.focus();
+            }
+        });
+
+        // --- Clipboard Logic ---
+        function focusActiveEditor() {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                return 'rich';
+            } else {
+                editor.focus();
+                return 'code';
+            }
+        }
+
+        cutBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('cut');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('copy');
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            const active = focusActiveEditor();
+            try {
+                // Modern Async Clipboard API
+                const text = await navigator.clipboard.readText();
+                if (active === 'rich') {
+                    document.execCommand('insertText', false, text);
+                } else {
+                    editor.replaceSelection(text);
+                }
+            } catch (err) {
+                // Fallback or Blocked
+                alert("Paste was blocked by your browser. Please use the keyboard shortcut (Ctrl+V / Cmd+V).");
+            }
+        });
+
+        // --- Rich Text Logic ---
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            richTextEditor.focus();
+            updateRTFToolbarState(); // Instant feedback
+        }
+
+        // Change Text Style (P, H1, H2, etc.)
+        textStyleSelect.addEventListener('change', (e) => {
+            const tag = e.target.value;
+            document.execCommand('formatBlock', false, tag);
+            richTextEditor.focus();
+            updateRTFToolbarState();
+        });
+
+        // Custom Font Size Logic (Pixel precise)
+        function changeFontSize(size) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (range.collapsed) return; // Don't do anything if no text selected
+
+                // We must use a wrapper because execCommand fontSize only supports 1-7
+                const span = document.createElement("span");
+                span.style.fontSize = size + "pt";
+                
+                try {
+                    // Extract contents returns a document fragment
+                    const contents = range.extractContents();
+                    span.appendChild(contents);
+                    range.insertNode(span);
+                    
+                    // Cleanup selection
+                    selection.removeAllRanges();
+                } catch (e) {
+                    console.error("Font size error:", e);
+                }
+            }
+            richTextEditor.focus();
+            updateRTFToolbarState();
+        }
+
+        // Helper to toggle button active state
+        function highlightButton(id, isActive) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            
+            if (isActive) {
+                btn.classList.add('bg-neutral-500', 'text-white');
+                btn.classList.remove('text-neutral-300', 'hover:bg-neutral-600');
+            } else {
+                btn.classList.remove('bg-neutral-500', 'text-white');
+                btn.classList.add('text-neutral-300', 'hover:bg-neutral-600');
+            }
+        }
+
+        // Detect current format and update toolbar
+        function updateRTFToolbarState() {
+             if (richTextEditor.classList.contains('hidden')) return;
+             
+             // 1. Button States
+             highlightButton('btn-bold', document.queryCommandState('bold'));
+             highlightButton('btn-italic', document.queryCommandState('italic'));
+             highlightButton('btn-underline', document.queryCommandState('underline'));
+             highlightButton('btn-align-left', document.queryCommandState('justifyLeft'));
+             highlightButton('btn-align-center', document.queryCommandState('justifyCenter'));
+             highlightButton('btn-align-right', document.queryCommandState('justifyRight'));
+             highlightButton('btn-list-ul', document.queryCommandState('insertUnorderedList'));
+             highlightButton('btn-list-ol', document.queryCommandState('insertOrderedList'));
+
+             // 2. Block Style (H1, H2, P) Detection
+             const selection = window.getSelection();
+             if (selection.rangeCount > 0) {
+                 let node = selection.anchorNode;
+                 if (node.nodeType === 3) node = node.parentNode; // Text node -> element
+                 
+                 // Ensure we are inside editor
+                 if (richTextEditor.contains(node) || node === richTextEditor) {
+                     let currentTag = node.nodeName;
+                     // If current tag is invalid for dropdown (e.g. STRONG), climb up
+                     while (node && node !== richTextEditor && !['H1','H2','H3','H4','H5','P','DIV'].includes(node.nodeName)) {
+                         node = node.parentNode;
+                     }
+                     if (node && node !== richTextEditor) {
+                         textStyleSelect.value = node.nodeName;
+                     } else {
+                         textStyleSelect.value = "P";
+                     }
+                 }
+             }
+
+             // 3. Font Size Logic
+             if (selection.rangeCount === 0) return;
+             
+             let node = selection.anchorNode;
+             // Ensure we are inside the editor
+             if (!richTextEditor.contains(node) && node !== richTextEditor) return;
+             
+             if (node.nodeType === 3) node = node.parentNode; // Get element from text node
+             
+             const computedStyle = window.getComputedStyle(node);
+             const fontSizePx = parseFloat(computedStyle.fontSize);
+             
+             // Convert px to pt (standard browser assumption: 1pt = 1.333px, so px * 0.75 = pt)
+             const fontSizePt = Math.round(fontSizePx * 0.75);
+             
+             // Update dropdown if the value matches one of our options
+             let found = false;
+             for(let i=0; i<fontSizeSelect.options.length; i++) {
+                 if (fontSizeSelect.options[i].value == fontSizePt) {
+                     fontSizeSelect.selectedIndex = i;
+                     found = true;
+                     break;
+                 }
+             }
+             if (!found) fontSizeSelect.value = "";
+        }
+
+        richTextEditor.addEventListener('mouseup', updateRTFToolbarState);
+        richTextEditor.addEventListener('keyup', updateRTFToolbarState);
+
+        fontSizeSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                changeFontSize(e.target.value);
+            }
+        });
+
+
+        // --- Link Modal Logic ---
+        function openLinkModal() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (richTextEditor.contains(range.commonAncestorContainer)) {
+                    savedSelectionRange = range;
+                } else {
+                    savedSelectionRange = null;
+                }
+            } else {
+                savedSelectionRange = null;
+            }
+
+            if (!savedSelectionRange || savedSelectionRange.collapsed) {
+                alert("Please select the text you want to link first.");
+                return;
+            }
+
+            linkModal.classList.remove('hidden');
+            linkInput.focus();
+        }
+
+        function closeLinkModal() {
+            linkModal.classList.add('hidden');
+            linkInput.value = '';
+        }
+
+        function insertLink() {
+            const url = linkInput.value;
+            closeLinkModal();
+
+            if (url && savedSelectionRange) {
+                richTextEditor.focus();
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedSelectionRange);
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        linkInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') insertLink();
+            if (e.key === 'Escape') closeLinkModal();
+        });
+
+        // --- Event Listeners & Logic ---
+
+        editor.on('cursorActivity', () => {
+            const pos = editor.getCursor();
+            cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+        });
+
+        editor.on('change', () => {
+            const text = editor.getValue();
+            docStatsEl.textContent = `${editor.lineCount()} Lines, ${text.length} Chars`;
+        });
+
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+
+        languageSelect.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            handleModeSwitch(mode);
+        });
+
+        formatBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) return;
+            const lineCount = editor.lineCount();
+            for (let i = 0; i < lineCount; i++) {
+                editor.indentLine(i, "smart");
+            }
+            editor.focus();
+        });
+
+        // Map extensions to modes (Standard MIME types for CodeMirror)
+        // Note: 'null' is often used for plain text or unknown types in CodeMirror 5
+        const extensionMap = {
+            'js': 'text/javascript',
+            'json': 'application/json',
+            'ts': 'text/javascript', 
+            'html': 'text/html',
+            'css': 'text/css',
+            'py': 'text/x-python',
+            'xml': 'application/xml',
+            'md': 'text/x-markdown',
+            'txt': 'null',
+            'csv': 'text/csv',
+            'log': 'null',
+            'rtf': 'richtext' 
+        };
+
+        function handleModeSwitch(mode) {
+            const optionText = languageSelect.options[languageSelect.selectedIndex].text;
+            modeDisplayEl.textContent = optionText;
+
+            if (mode === 'richtext') {
+                const currentContent = editor.getValue();
+                if (/<[a-z][\s\S]*>/i.test(currentContent)) {
+                     richTextEditor.innerHTML = currentContent;
+                } else {
+                    richTextEditor.innerHTML = currentContent.replace(/\n/g, '<br>');
+                }
+
+                cmWrapper.classList.add('hidden');
+                richTextEditor.classList.remove('hidden');
+                richTextToolbar.classList.remove('hidden'); 
+                previewBtn.classList.add('hidden');
+                previewPane.classList.add('hidden');
+                formatBtn.classList.add('hidden');
+
+            } else {
+                if (!richTextEditor.classList.contains('hidden')) {
+                    if (mode === 'text/html') {
+                         editor.setValue(richTextEditor.innerHTML);
+                    } else {
+                        editor.setValue(richTextEditor.innerText);
+                    }
+                }
+
+                cmWrapper.classList.remove('hidden');
+                richTextEditor.classList.add('hidden');
+                richTextToolbar.classList.add('hidden');
+                formatBtn.classList.remove('hidden');
+
+                // For CSV or other types not strictly supported by a loaded mode, default to null
+                const cmMode = (mode === 'null' || mode === 'text/csv') ? null : mode;
+                editor.setOption('mode', cmMode);
+                editor.refresh(); 
+
+                if (mode === 'text/html') {
+                    previewBtn.classList.remove('hidden');
+                } else {
+                    previewBtn.classList.add('hidden');
+                    previewPane.classList.add('hidden');
+                }
+            }
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                filenameInput.value = file.name;
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                let mode = 'null';
+                
+                // Inverse lookup to find mode from extension in saveConfig
+                for (const [m, config] of Object.entries(saveConfig)) {
+                    if (config.ext === '.' + ext) {
+                        mode = m;
+                        break;
+                    }
+                }
+                
+                // Fallback for unknown extensions
+                let foundOption = false;
+                for (let i = 0; i < languageSelect.options.length; i++) {
+                    const opt = languageSelect.options[i];
+                    if (opt.value === mode) {
+                        languageSelect.selectedIndex = i;
+                        foundOption = true;
+                        break;
+                    }
+                }
+                if (!foundOption) {
+                    languageSelect.value = 'null';
+                    mode = 'null';
+                }
+
+                if (mode === 'richtext') {
+                    richTextEditor.innerHTML = content;
+                    handleModeSwitch('richtext');
+                } else {
+                    editor.setValue(content);
+                    handleModeSwitch(mode);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // 2. Updated Save Logic
+        saveBtn.addEventListener('click', () => {
+            const mode = languageSelect.value;
+            const config = saveConfig[mode] || saveConfig['null'];
+            
+            let filename = filenameInput.value.trim() || 'untitled';
+            
+            // Auto-correct extension
+            // Removes existing extension if it matches any known one, then appends correct one
+            // This prevents "script.js.py" if switching modes
+            const dotIndex = filename.lastIndexOf('.');
+            if (dotIndex !== -1) {
+                const existingExt = filename.substring(dotIndex);
+                // If the existing extension is one of our supported ones, strip it
+                const isSupportedExt = Object.values(saveConfig).some(c => c.ext === existingExt);
+                if (isSupportedExt) {
+                    filename = filename.substring(0, dotIndex);
+                }
+            }
+            
+            // Append the correct extension for the current mode
+            filename = filename + config.ext;
+            
+            // Update the input field to show the user what we are saving
+            filenameInput.value = filename;
+
+            // Get Content
+            let content = '';
+            if (mode === 'richtext') {
+                content = richTextEditor.innerHTML;
+            } else {
+                content = editor.getValue();
+            }
+
+            const blob = new Blob([content], { type: config.mime });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        let isPreviewActive = false;
+        previewBtn.addEventListener('click', () => {
+            isPreviewActive = !isPreviewActive;
+            if (isPreviewActive) {
+                previewPane.classList.remove('hidden');
+                editor.setSize(null, '100%'); 
+                previewFrame.srcdoc = editor.getValue();
+            } else {
+                previewPane.classList.add('hidden');
+            }
+        });
+        
+        editor.on('change', () => {
+            if (isPreviewActive && languageSelect.value === 'text/html') {
+                clearTimeout(window.previewTimeout);
+                window.previewTimeout = setTimeout(() => {
+                    previewFrame.srcdoc = editor.getValue();
+                }, 500);
+            }
+        });
+
+        applyTheme('material-darker'); 
+        handleModeSwitch('null');
+
+    </script>
+</body>
+</html>
