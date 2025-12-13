@@ -38,7 +38,7 @@
         }
 
         /* Rich Text Editor Styling */
-        #rich-text-editor {
+        .rich-text-editor-instance {
             outline: none;
             overflow-y: auto;
             padding: 40px; /* More padding for a document feel */
@@ -46,28 +46,67 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 16px;
             line-height: 1.6;
+            width: 100%;
         }
-        #rich-text-editor ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em; }
-        #rich-text-editor ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em; }
-        #rich-text-editor a { color: #3b82f6; text-decoration: underline; }
-        #rich-text-editor p { margin-bottom: 1em; }
+        .rich-text-editor-instance ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em; }
+        .rich-text-editor-instance ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em; }
+        .rich-text-editor-instance a { color: #3b82f6; text-decoration: underline; }
+        .rich-text-editor-instance p { margin-bottom: 1em; }
 
         /* Document Headings Styling (Visual Map) */
-        #rich-text-editor h1 { font-size: 2.25em; font-weight: 700; line-height: 1.2; margin-bottom: 0.5em; } /* Title */
-        #rich-text-editor h2 { font-size: 1.5em; font-weight: 400; color: #6b7280; margin-bottom: 1em; } /* Subtitle */
-        #rich-text-editor h3 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 1 */
-        #rich-text-editor h4 { font-size: 1.25em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 2 */
-        #rich-text-editor h5 { font-size: 1.1em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; text-transform: uppercase; color: #6b7280; } /* Heading 3 */
+        .rich-text-editor-instance h1 { font-size: 2.25em; font-weight: 700; line-height: 1.2; margin-bottom: 0.5em; } /* Title */
+        .rich-text-editor-instance h2 { font-size: 1.5em; font-weight: 400; color: #6b7280; margin-bottom: 1em; } /* Subtitle */
+        .rich-text-editor-instance h3 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 1 */
+        .rich-text-editor-instance h4 { font-size: 1.25em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 2 */
+        .rich-text-editor-instance h5 { font-size: 1.1em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; text-transform: uppercase; color: #6b7280; } /* Heading 3 */
         
         /* Dark mode overrides for RTF content */
-        #rich-text-editor.dark-mode a { color: #93c5fd; }
-        #rich-text-editor.dark-mode h2 { color: #9ca3af; } /* Lighter gray for subtitle in dark mode */
-        #rich-text-editor.dark-mode h5 { color: #9ca3af; }
+        .rich-text-editor-instance.dark-mode a { color: #93c5fd; }
+        .rich-text-editor-instance.dark-mode h2 { color: #9ca3af; } /* Lighter gray for subtitle in dark mode */
+        .rich-text-editor-instance.dark-mode h5 { color: #9ca3af; }
 
         /* Fix for Text Selection Visibility in Dark Mode */
-        #rich-text-editor.dark-mode ::selection {
+        .rich-text-editor-instance.dark-mode ::selection {
             background-color: #0ea5e9; /* Sky-500 - Brighter and more visible than standard blue */
             color: #ffffff;
+        }
+
+        /* Tab Styles */
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            height: 100%;
+            background-color: #262626; /* neutral-800 */
+            color: #a3a3a3; /* neutral-400 */
+            border-right: 1px solid #404040; /* neutral-700 */
+            cursor: pointer;
+            font-size: 13px;
+            min-width: 120px;
+            max-width: 200px;
+            user-select: none;
+        }
+        .tab:hover {
+            background-color: #333;
+        }
+        .tab.active {
+            background-color: #171717; /* neutral-900 (matches body) */
+            color: #e5e5e5; /* neutral-200 */
+            border-top: 2px solid #3b82f6; /* blue-500 */
+        }
+        .tab-close {
+            opacity: 0;
+            border-radius: 4px;
+            padding: 2px;
+            margin-left: auto;
+        }
+        .tab:hover .tab-close {
+            opacity: 1;
+        }
+        .tab-close:hover {
+            background-color: #404040;
+            color: #ef4444;
         }
     </style>
 </head>
@@ -250,6 +289,14 @@
         </div>
     </header>
 
+    <!-- Tab Bar -->
+    <div id="tab-bar" class="flex items-center bg-neutral-900 border-b border-neutral-700 overflow-x-auto h-9 select-none">
+        <!-- Tabs will be injected here -->
+        <button id="new-tab-btn" class="px-3 hover:text-white text-neutral-400 h-full flex items-center" title="New Tab">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+    </div>
+
     <!-- Main Workspace -->
     <main class="flex-1 flex overflow-hidden relative">
         
@@ -261,7 +308,7 @@
             </div>
 
             <!-- Rich Text Instance (Visual Mode) -->
-            <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
+            <div id="rich-text-container" class="hidden h-full w-full"></div>
         </div>
 
         <!-- Preview Pane (Hidden by default, used for HTML) -->
@@ -342,6 +389,12 @@
         // --- Initialization ---
         lucide.createIcons();
 
+        // --- Global State ---
+        let documents = [];
+        let activeDocId = null;
+        let docCounter = 0;
+        let richTextEditor = null; // Will point to the currently active rich text DOM element
+
         // 1. Defined Save Configuration for Extensions
         const saveConfig = {
             // Web
@@ -377,7 +430,7 @@
             'null': { ext: '.txt', mime: 'text/plain' }
         };
 
-        // Initialize CodeMirror
+        // Initialize CodeMirror (Shared Instance)
         const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
             lineNumbers: true,
             mode: 'null',
@@ -393,8 +446,8 @@
             tabSize: 4
         });
 
-        // Set default content
-        editor.setValue(`Welcome to Text&Code Edit+!
+        // Default content for new files
+        const DEFAULT_CONTENT = `Welcome to Text&Code Edit+!
 
 Text&Code Edit+ is a versatile editor for both coding and document creation.
 
@@ -425,7 +478,7 @@ QUICK START GUIDE
 5. THEMES
    • Toggle between Dark (Material) and Light (Eclipse) themes via the dropdown.
 
-Start by typing below or use the "Folder" icon to open an existing file.`);
+Start by typing below or use the "Folder" icon to open an existing file.`;
 
         // --- DOM Elements ---
         const filenameInput = document.getElementById('filename-input');
@@ -443,7 +496,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         
         // Rich Text Elements
         const cmWrapper = document.getElementById('cm-wrapper');
-        const richTextEditor = document.getElementById('rich-text-editor');
+        const richTextContainer = document.getElementById('rich-text-container');
         const richTextToolbar = document.getElementById('richtext-toolbar');
         const editorContainer = document.getElementById('editor-container');
         const linkModal = document.getElementById('link-modal');
@@ -456,28 +509,202 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         const undoBtn = document.getElementById('undo-btn');
         const redoBtn = document.getElementById('redo-btn');
 
+        const tabBar = document.getElementById('tab-bar');
+        const newTabBtn = document.getElementById('new-tab-btn');
+
         let savedSelectionRange = null;
+
+        // --- Document State Management ---
+        class DocumentState {
+            constructor(filename, content, mode) {
+                this.id = docCounter++;
+                this.filename = filename;
+                this.mode = mode || 'null';
+
+                // CodeMirror Doc
+                // If initializing in richtext, we might want to sync later, but start empty in CM
+                // If initializing in code, we set content in CM
+                const cmContent = mode === 'richtext' ? '' : content;
+                const cmMode = (mode === 'richtext' || mode === 'null' || mode === 'text/csv') ? null : mode;
+
+                this.cmDoc = new CodeMirror.Doc(cmContent, cmMode);
+
+                // Rich Text Element
+                this.richTextElement = document.createElement('div');
+                this.richTextElement.className = 'rich-text-editor-instance hidden p-4';
+                this.richTextElement.contentEditable = true;
+                this.richTextElement.spellcheck = false;
+
+                // Initial content for Rich Text
+                if (mode === 'richtext') {
+                    if (/<[a-z][\s\S]*>/i.test(content)) {
+                         this.richTextElement.innerHTML = content;
+                    } else {
+                        this.richTextElement.innerHTML = content.replace(/\n/g, '<br>');
+                    }
+                } else {
+                    this.richTextElement.innerHTML = '';
+                }
+
+                // Attach Listeners for Rich Text Toolbar updates (must be on instance)
+                this.richTextElement.addEventListener('mouseup', updateRTFToolbarState);
+                this.richTextElement.addEventListener('keyup', updateRTFToolbarState);
+
+                richTextContainer.appendChild(this.richTextElement);
+            }
+
+            destroy() {
+                this.richTextElement.remove();
+                // cmDoc is handled by CodeMirror garbage collection if not referenced
+            }
+        }
+
+        function createNewDocument(filename = 'untitled.txt', content = '', mode = 'null') {
+            const doc = new DocumentState(filename, content, mode);
+            documents.push(doc);
+            renderTabs();
+            switchTab(doc.id);
+            return doc;
+        }
+
+        function closeDocument(id, event) {
+            if (event) event.stopPropagation();
+
+            const index = documents.findIndex(d => d.id === id);
+            if (index === -1) return;
+
+            const doc = documents[index];
+            doc.destroy();
+            documents.splice(index, 1);
+
+            if (documents.length === 0) {
+                createNewDocument();
+            } else if (activeDocId === id) {
+                // Switch to nearest neighbor
+                const newIndex = Math.max(0, index - 1);
+                switchTab(documents[newIndex].id);
+            } else {
+                renderTabs();
+            }
+        }
+
+        function switchTab(id) {
+            const doc = documents.find(d => d.id === id);
+            if (!doc) return;
+
+            // If we are switching AWAY from a tab, we might want to sync its state if needed
+            // But with separate storage (cmDoc vs richTextElement), strict syncing isn't required
+            // unless we want to keep them in parity. For now, we trust the active mode's storage.
+
+            activeDocId = id;
+
+            // 1. Swap CodeMirror Doc
+            editor.swapDoc(doc.cmDoc);
+
+            // 2. Manage Rich Text Elements
+            richTextEditor = doc.richTextElement; // Update global reference
+
+            // Hide all instances
+            Array.from(richTextContainer.children).forEach(el => el.classList.add('hidden'));
+            // Show active one (will be handled by handleModeSwitch but good to ensure availability)
+
+            // 3. Update UI Controls
+            filenameInput.value = doc.filename;
+
+            // Set Language Dropdown
+            let foundOption = false;
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                if (languageSelect.options[i].value === doc.mode) {
+                    languageSelect.selectedIndex = i;
+                    foundOption = true;
+                    break;
+                }
+            }
+            if (!foundOption) {
+                languageSelect.value = 'null';
+            }
+
+            // 4. Trigger Mode Switch (Handles visibility of CM vs RTF)
+            // We pass false to skip syncing content because we are just switching views,
+            // and the content in the target view (RTF or CM) should already be correct/preserved.
+            handleModeSwitch(doc.mode, false);
+
+            // Apply current theme to the new rich text element
+            applyTheme(themeSelect.value);
+
+            renderTabs();
+        }
+
+        function renderTabs() {
+            // Clear tabs but keep new button
+            // Actually simpler to just rebuild
+            tabBar.innerHTML = '';
+
+            documents.forEach(doc => {
+                const tab = document.createElement('div');
+                tab.className = `tab ${doc.id === activeDocId ? 'active' : ''}`;
+                tab.onclick = () => switchTab(doc.id);
+
+                const icon = document.createElement('i');
+                // Determine icon based on mode
+                icon.setAttribute('data-lucide', doc.mode === 'richtext' ? 'file-text' : 'code');
+                icon.className = "w-4 h-4";
+
+                const title = document.createElement('span');
+                title.textContent = doc.filename;
+                title.className = "truncate";
+
+                const closeBtn = document.createElement('button');
+                closeBtn.className = "tab-close";
+                closeBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
+                closeBtn.onclick = (e) => closeDocument(doc.id, e);
+
+                tab.appendChild(icon);
+                tab.appendChild(title);
+                tab.appendChild(closeBtn);
+
+                tabBar.appendChild(tab);
+            });
+
+            tabBar.appendChild(newTabBtn);
+            lucide.createIcons();
+        }
+
+        newTabBtn.addEventListener('click', () => {
+             createNewDocument('untitled.txt', '', 'null');
+        });
+
+        filenameInput.addEventListener('change', (e) => {
+            const doc = documents.find(d => d.id === activeDocId);
+            if (doc) {
+                doc.filename = e.target.value;
+                renderTabs();
+            }
+        });
 
         // --- Theme Logic ---
         function applyTheme(theme) {
             editor.setOption('theme', theme);
             
-            if (theme === 'material-darker') {
-                richTextEditor.classList.remove('bg-white', 'text-black');
-                richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
-                editorContainer.classList.remove('bg-white');
-                editorContainer.classList.add('bg-neutral-800');
-            } else {
-                richTextEditor.classList.remove('bg-neutral-800', 'text-neutral-200', 'dark-mode');
-                richTextEditor.classList.add('bg-white', 'text-black');
-                editorContainer.classList.remove('bg-neutral-800');
-                editorContainer.classList.add('bg-white');
+            // Apply to active rich text editor if it exists
+            if (richTextEditor) {
+                if (theme === 'material-darker') {
+                    richTextEditor.classList.remove('bg-white', 'text-black');
+                    richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                    editorContainer.classList.remove('bg-white');
+                    editorContainer.classList.add('bg-neutral-800');
+                } else {
+                    richTextEditor.classList.remove('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                    richTextEditor.classList.add('bg-white', 'text-black');
+                    editorContainer.classList.remove('bg-neutral-800');
+                    editorContainer.classList.add('bg-white');
+                }
             }
         }
 
         // --- Undo / Redo Logic ---
         undoBtn.addEventListener('click', () => {
-            if (!richTextEditor.classList.contains('hidden')) {
+            if (richTextEditor && !richTextEditor.classList.contains('hidden')) {
                 richTextEditor.focus();
                 document.execCommand('undo');
             } else {
@@ -487,7 +714,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         });
 
         redoBtn.addEventListener('click', () => {
-            if (!richTextEditor.classList.contains('hidden')) {
+            if (richTextEditor && !richTextEditor.classList.contains('hidden')) {
                 richTextEditor.focus();
                 document.execCommand('redo');
             } else {
@@ -498,7 +725,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
 
         // --- Clipboard Logic ---
         function focusActiveEditor() {
-            if (!richTextEditor.classList.contains('hidden')) {
+            if (richTextEditor && !richTextEditor.classList.contains('hidden')) {
                 richTextEditor.focus();
                 return 'rich';
             } else {
@@ -536,7 +763,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         // --- Rich Text Logic ---
         function formatDoc(cmd, value = null) {
             document.execCommand(cmd, false, value);
-            richTextEditor.focus();
+            if (richTextEditor) richTextEditor.focus();
             updateRTFToolbarState(); // Instant feedback
         }
 
@@ -544,7 +771,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         textStyleSelect.addEventListener('change', (e) => {
             const tag = e.target.value;
             document.execCommand('formatBlock', false, tag);
-            richTextEditor.focus();
+            if (richTextEditor) richTextEditor.focus();
             updateRTFToolbarState();
         });
 
@@ -571,7 +798,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                     console.error("Font size error:", e);
                 }
             }
-            richTextEditor.focus();
+            if (richTextEditor) richTextEditor.focus();
             updateRTFToolbarState();
         }
 
@@ -591,7 +818,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
 
         // Detect current format and update toolbar
         function updateRTFToolbarState() {
-             if (richTextEditor.classList.contains('hidden')) return;
+             if (!richTextEditor || richTextEditor.classList.contains('hidden')) return;
              
              // 1. Button States
              highlightButton('btn-bold', document.queryCommandState('bold'));
@@ -651,8 +878,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
              if (!found) fontSizeSelect.value = "";
         }
 
-        richTextEditor.addEventListener('mouseup', updateRTFToolbarState);
-        richTextEditor.addEventListener('keyup', updateRTFToolbarState);
+        // Listeners for richTextEditor are now attached in DocumentState constructor
 
         fontSizeSelect.addEventListener('change', (e) => {
             if (e.target.value) {
@@ -666,7 +892,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
-                if (richTextEditor.contains(range.commonAncestorContainer)) {
+                if (richTextEditor && richTextEditor.contains(range.commonAncestorContainer)) {
                     savedSelectionRange = range;
                 } else {
                     savedSelectionRange = null;
@@ -694,7 +920,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             closeLinkModal();
 
             if (url && savedSelectionRange) {
-                richTextEditor.focus();
+                if (richTextEditor) richTextEditor.focus();
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(savedSelectionRange);
@@ -709,15 +935,18 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
 
         // --- Event Listeners & Logic ---
 
-        editor.on('cursorActivity', () => {
+        function updateCursorPos() {
             const pos = editor.getCursor();
             cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
-        });
+        }
 
-        editor.on('change', () => {
+        function updateDocStats() {
             const text = editor.getValue();
             docStatsEl.textContent = `${editor.lineCount()} Lines, ${text.length} Chars`;
-        });
+        }
+
+        editor.on('cursorActivity', updateCursorPos);
+        editor.on('change', updateDocStats);
 
         themeSelect.addEventListener('change', (e) => {
             applyTheme(e.target.value);
@@ -725,11 +954,11 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
 
         languageSelect.addEventListener('change', (e) => {
             const mode = e.target.value;
-            handleModeSwitch(mode);
+            handleModeSwitch(mode, true); // User initiated switch, so sync content
         });
 
         formatBtn.addEventListener('click', () => {
-            if (!richTextEditor.classList.contains('hidden')) return;
+            if (richTextEditor && !richTextEditor.classList.contains('hidden')) return;
             const lineCount = editor.lineCount();
             for (let i = 0; i < lineCount; i++) {
                 editor.indentLine(i, "smart");
@@ -754,27 +983,38 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             'rtf': 'richtext' 
         };
 
-        function handleModeSwitch(mode) {
+        function handleModeSwitch(mode, syncContent = true) {
+            // Update active doc state
+            if (activeDocId !== null) {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (doc) doc.mode = mode;
+            }
+
             const optionText = languageSelect.options[languageSelect.selectedIndex].text;
             modeDisplayEl.textContent = optionText;
 
             if (mode === 'richtext') {
-                const currentContent = editor.getValue();
-                if (/<[a-z][\s\S]*>/i.test(currentContent)) {
-                     richTextEditor.innerHTML = currentContent;
-                } else {
-                    richTextEditor.innerHTML = currentContent.replace(/\n/g, '<br>');
+                if (syncContent) {
+                    const currentContent = editor.getValue();
+                    if (richTextEditor) {
+                        if (/<[a-z][\s\S]*>/i.test(currentContent)) {
+                             richTextEditor.innerHTML = currentContent;
+                        } else {
+                            richTextEditor.innerHTML = currentContent.replace(/\n/g, '<br>');
+                        }
+                    }
                 }
 
                 cmWrapper.classList.add('hidden');
-                richTextEditor.classList.remove('hidden');
+                richTextContainer.classList.remove('hidden');
+                if (richTextEditor) richTextEditor.classList.remove('hidden');
                 richTextToolbar.classList.remove('hidden'); 
                 previewBtn.classList.add('hidden');
                 previewPane.classList.add('hidden');
                 formatBtn.classList.add('hidden');
 
             } else {
-                if (!richTextEditor.classList.contains('hidden')) {
+                if (syncContent && richTextEditor && !richTextEditor.classList.contains('hidden')) {
                     if (mode === 'text/html') {
                          editor.setValue(richTextEditor.innerHTML);
                     } else {
@@ -783,7 +1023,8 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 }
 
                 cmWrapper.classList.remove('hidden');
-                richTextEditor.classList.add('hidden');
+                richTextContainer.classList.add('hidden');
+                if (richTextEditor) richTextEditor.classList.add('hidden');
                 richTextToolbar.classList.add('hidden');
                 formatBtn.classList.remove('hidden');
 
@@ -808,7 +1049,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target.result;
-                filenameInput.value = file.name;
+                const filename = file.name;
                 
                 const ext = file.name.split('.').pop().toLowerCase();
                 let mode = 'null';
@@ -836,47 +1077,56 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                     mode = 'null';
                 }
 
-                if (mode === 'richtext') {
-                    richTextEditor.innerHTML = content;
-                    handleModeSwitch('richtext');
-                } else {
-                    editor.setValue(content);
-                    handleModeSwitch(mode);
-                }
+                // Create new document for opened file
+                createNewDocument(filename, content, mode);
             };
             reader.readAsText(file);
         });
 
         // 2. Updated Save Logic
         saveBtn.addEventListener('click', () => {
-            const mode = languageSelect.value;
+            const doc = documents.find(d => d.id === activeDocId);
+            if (!doc) return;
+
+            const mode = doc.mode;
             const config = saveConfig[mode] || saveConfig['null'];
             
-            let filename = filenameInput.value.trim() || 'untitled';
+            let filename = doc.filename.trim() || 'untitled';
             
-            // Auto-correct extension
-            // Removes existing extension if it matches any known one, then appends correct one
-            // This prevents "script.js.py" if switching modes
+            // Auto-correct extension if user didn't type it
             const dotIndex = filename.lastIndexOf('.');
             if (dotIndex !== -1) {
                 const existingExt = filename.substring(dotIndex);
-                // If the existing extension is one of our supported ones, strip it
                 const isSupportedExt = Object.values(saveConfig).some(c => c.ext === existingExt);
                 if (isSupportedExt) {
-                    filename = filename.substring(0, dotIndex);
+                   // Filename has valid extension, leave it or check if it matches mode?
+                   // Current logic: if it matches ANY supported extension, strip it to append NEW one.
+                   // But if I opened "script.js" and saved it, I don't want "script.js.js".
+
+                   // Better logic: if current extension matches CURRENT mode's extension, do nothing.
+                   if (existingExt === config.ext) {
+                       // Good.
+                   } else {
+                       // Changing type? e.g. .txt -> .js
+                       filename = filename.substring(0, dotIndex);
+                       filename = filename + config.ext;
+                   }
+                } else {
+                    filename = filename + config.ext;
                 }
+            } else {
+                filename = filename + config.ext;
             }
             
-            // Append the correct extension for the current mode
-            filename = filename + config.ext;
-            
-            // Update the input field to show the user what we are saving
+            // Update the document filename and input field
+            doc.filename = filename;
             filenameInput.value = filename;
+            renderTabs();
 
             // Get Content
             let content = '';
             if (mode === 'richtext') {
-                content = richTextEditor.innerHTML;
+                content = richTextEditor ? richTextEditor.innerHTML : '';
             } else {
                 content = editor.getValue();
             }
@@ -914,8 +1164,8 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             }
         });
 
-        applyTheme('material-darker'); 
-        handleModeSwitch('null');
+        // Initialize with default document
+        createNewDocument('untitled.txt', DEFAULT_CONTENT, 'null');
 
     </script>
 </body>
