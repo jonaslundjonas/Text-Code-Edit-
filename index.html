@@ -175,6 +175,9 @@
 
             <!-- Right: Actions -->
             <div class="flex items-center gap-2">
+                <button id="help-btn" class="flex items-center gap-2 bg-neutral-700 hover:bg-neutral-600 border border-neutral-600 text-white px-3 py-1.5 rounded text-sm font-medium transition">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i> Help
+                </button>
                 <button id="preview-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition hidden">
                     <i data-lucide="eye" class="w-4 h-4"></i> Preview
                 </button>
@@ -288,6 +291,86 @@
             <span id="mode-display">Plain Text</span>
         </div>
     </footer>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-white text-xl font-bold">Help & Information</h3>
+                <button onclick="closeHelpModal()" class="text-neutral-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto pr-2 text-sm text-neutral-300 flex-1 space-y-4">
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">How to Use the App</h4>
+                    <p>Text&Code Edit+ is a dual-purpose editor designed for both plain text/code editing and rich document formatting.</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>Open/Save:</strong> Use the folder icon to open files from your device. Use the save icon to download the current file. The file extension is automatically appended based on the selected language mode.</li>
+                        <li><strong>Language Mode:</strong> Select the appropriate language or file format from the dropdown in the center of the toolbar. Changing modes updates syntax highlighting or switches to the Rich Text editor.</li>
+                        <li><strong>Rich Text Editing:</strong> Selecting 'Rich Text (.rtf)' switches the editor to a visual mode where you can format text, add headings, lists, and links. A secondary toolbar will appear.</li>
+                        <li><strong>Code Formatting:</strong> While in code mode, click the magic wand icon to automatically format and indent your code.</li>
+                        <li><strong>Browser Preview:</strong> When editing HTML files, click the 'Preview' button to open a live browser preview pane.</li>
+                        <li><strong>Themes:</strong> Toggle between light and dark themes using the theme dropdown.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">Supported File Types</h4>
+                    <p>The app supports over 20 specific modes grouped into categories:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <strong class="text-white">Editors</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Plain Text (.txt)</li>
+                                <li>Rich Text (.rtf)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Web</strong>
+                            <ul class="list-disc pl-5">
+                                <li>HTML (.html)</li>
+                                <li>CSS (.css)</li>
+                                <li>JavaScript (.js)</li>
+                                <li>PHP (.php)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">System/App</strong>
+                            <ul class="list-disc pl-5">
+                                <li>C++ (.cpp)</li>
+                                <li>C# (.cs)</li>
+                                <li>Java (.java)</li>
+                                <li>Python (.py)</li>
+                                <li>Go (.go)</li>
+                                <li>Rust (.rs)</li>
+                                <li>Ruby (.rb)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Scripting & Data</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Shell/Bash (.sh)</li>
+                                <li>PowerShell (.ps1)</li>
+                                <li>Lua (.lua)</li>
+                                <li>Markdown (.md)</li>
+                                <li>JSON (.json)</li>
+                                <li>CSV (.csv)</li>
+                                <li>XML (.xml)</li>
+                                <li>SQL (.sql)</li>
+                                <li>YAML (.yaml)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeHelpModal()" class="px-4 py-2 bg-neutral-700 text-white rounded hover:bg-neutral-600 transition border border-neutral-600">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Link Modal -->
     <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
@@ -440,6 +523,8 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         const docStatsEl = document.getElementById('doc-stats');
         const modeDisplayEl = document.getElementById('mode-display');
         const formatBtn = document.getElementById('format-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
         
         // Rich Text Elements
         const cmWrapper = document.getElementById('cm-wrapper');
@@ -660,6 +745,20 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             }
         });
 
+
+        // --- Help Modal Logic ---
+        function openHelpModal() {
+            helpModal.classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            helpModal.classList.add('hidden');
+        }
+
+        // Expose to window for inline onclick handler
+        window.closeHelpModal = closeHelpModal;
+
+        helpBtn.addEventListener('click', openHelpModal);
 
         // --- Link Modal Logic ---
         function openLinkModal() {
