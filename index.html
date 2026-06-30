@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text&Code Edit+</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CodeMirror 5 Core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <!-- CodeMirror Themes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+    
+    <!-- CodeMirror Addons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
+    <!-- Addons for Tag Matching/Closing (Fixes HTML editing feel) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Overrides for CodeMirror to fit the container perfectly */
+        .CodeMirror {
+            height: 100%;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Smooth scrolling for the whole page */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Rich Text Editor Styling */
+        #rich-text-editor {
+            outline: none;
+            overflow-y: auto;
+            padding: 40px; /* More padding for a document feel */
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        #rich-text-editor ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em; }
+        #rich-text-editor ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em; }
+        #rich-text-editor a { color: #3b82f6; text-decoration: underline; }
+        #rich-text-editor p { margin-bottom: 1em; }
+
+        /* Document Headings Styling (Visual Map) */
+        #rich-text-editor h1 { font-size: 2.25em; font-weight: 700; line-height: 1.2; margin-bottom: 0.5em; } /* Title */
+        #rich-text-editor h2 { font-size: 1.5em; font-weight: 400; color: #6b7280; margin-bottom: 1em; } /* Subtitle */
+        #rich-text-editor h3 { font-size: 1.5em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 1 */
+        #rich-text-editor h4 { font-size: 1.25em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; } /* Heading 2 */
+        #rich-text-editor h5 { font-size: 1.1em; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; text-transform: uppercase; color: #6b7280; } /* Heading 3 */
+        
+        /* Dark mode overrides for RTF content */
+        #rich-text-editor.dark-mode a { color: #93c5fd; }
+        #rich-text-editor.dark-mode h2 { color: #9ca3af; } /* Lighter gray for subtitle in dark mode */
+        #rich-text-editor.dark-mode h5 { color: #9ca3af; }
+
+        /* Fix for Text Selection Visibility in Dark Mode */
+        #rich-text-editor.dark-mode ::selection {
+            background-color: #0ea5e9; /* Sky-500 - Brighter and more visible than standard blue */
+            color: #ffffff;
+        }
+
+        /* Log file syntax highlighting (dark theme) */
+        .cm-log-fatal     { color: #fb7185; font-weight: 700; background: rgba(239,68,68,0.18); padding: 0 3px; border-radius: 2px; }
+        .cm-log-error     { color: #ef4444; font-weight: 600; }
+        .cm-log-warn      { color: #f59e0b; font-weight: 600; }
+        .cm-log-info      { color: #60a5fa; }
+        .cm-log-debug     { color: #9ca3af; font-style: italic; }
+        .cm-log-timestamp { color: #34d399; }
+        .cm-log-ip        { color: #c084fc; }
+        .cm-log-url       { color: #38bdf8; text-decoration: underline; }
+        .cm-log-method    { color: #f472b6; font-weight: 600; }
+        .cm-log-status    { color: #fbbf24; }
+
+        /* Log file syntax highlighting (light/eclipse theme) */
+        .cm-s-eclipse .cm-log-fatal     { color: #b91c1c; background: rgba(239,68,68,0.10); }
+        .cm-s-eclipse .cm-log-error     { color: #b91c1c; }
+        .cm-s-eclipse .cm-log-warn      { color: #b45309; }
+        .cm-s-eclipse .cm-log-info      { color: #1d4ed8; }
+        .cm-s-eclipse .cm-log-debug     { color: #4b5563; }
+        .cm-s-eclipse .cm-log-timestamp { color: #047857; }
+        .cm-s-eclipse .cm-log-ip        { color: #7c3aed; }
+        .cm-s-eclipse .cm-log-url       { color: #0369a1; }
+        .cm-s-eclipse .cm-log-method    { color: #be185d; }
+        .cm-s-eclipse .cm-log-status    { color: #b45309; }
+
+        /* Log mode hides line wrap by default for proper tail-style reading */
+        .CodeMirror.log-view .CodeMirror-line { white-space: pre; }
+
+        /* Hide filtered log lines without removing them from the buffer */
+        .CodeMirror pre.log-hidden { display: none; }
+
+        /* Subtle drop-zone highlight when dragging a file over the editor */
+        body.drag-over::after {
+            content: 'Drop file to open';
+            position: fixed; inset: 0;
+            background: rgba(59,130,246,0.18);
+            color: white; font-weight: 600; font-size: 1.25rem;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; z-index: 100;
+            border: 4px dashed #3b82f6;
+        }
+
+        /* kbd styling for help modal */
+        #help-modal kbd {
+            background: #1f2937; border: 1px solid #4b5563; border-bottom-width: 2px;
+            border-radius: 4px; padding: 1px 6px; font-family: 'Fira Code', monospace;
+            font-size: 0.85em; color: #f3f4f6;
+        }
+
+        /* Markdown preview pane content styling */
+        .md-preview {
+            padding: 32px 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 15px;
+            line-height: 1.65;
+            color: #1f2937;
+            overflow-y: auto;
+            height: 100%;
+        }
+        .md-preview h1 { font-size: 2em; font-weight: 700; margin: 0.6em 0 0.3em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.2em; }
+        .md-preview h2 { font-size: 1.5em; font-weight: 700; margin: 0.6em 0 0.3em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.2em; }
+        .md-preview h3 { font-size: 1.25em; font-weight: 700; margin: 0.6em 0 0.3em; }
+        .md-preview h4 { font-size: 1.1em; font-weight: 700; margin: 0.6em 0 0.3em; }
+        .md-preview h5, .md-preview h6 { font-weight: 700; margin: 0.6em 0 0.3em; }
+        .md-preview p  { margin: 0.6em 0; }
+        .md-preview ul, .md-preview ol { padding-left: 1.6em; margin: 0.5em 0; }
+        .md-preview li { margin: 0.2em 0; }
+        .md-preview code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; }
+        .md-preview pre { background: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto; }
+        .md-preview pre code { background: transparent; padding: 0; }
+        .md-preview blockquote { border-left: 4px solid #d1d5db; color: #4b5563; padding: 0 1em; margin: 0.5em 0; }
+        .md-preview a { color: #2563eb; text-decoration: underline; }
+        .md-preview img { max-width: 100%; }
+        .md-preview hr { border: none; border-top: 1px solid #e5e7eb; margin: 1em 0; }
+        .md-preview table { border-collapse: collapse; margin: 0.5em 0; }
+        .md-preview th, .md-preview td { border: 1px solid #e5e7eb; padding: 6px 10px; }
+        .md-preview th { background: #f9fafb; }
+    </style>
+</head>
+<body class="bg-neutral-900 text-neutral-200 flex flex-col h-screen relative">
+
+    <!-- Navbar / Toolbar -->
+    <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col">
+        <!-- Top Row: File Controls -->
+        <div class="flex items-center justify-between p-2 px-4">
+            
+            <!-- Left: Logo & File Controls -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg">
+                    <i data-lucide="code-2"></i>
+                    <span>Text&Code Edit+</span>
+                </div>
+
+                <div class="h-6 w-px bg-neutral-600 mx-2"></div>
+
+                <div class="flex items-center gap-2 bg-neutral-700 rounded-md px-3 py-1 border border-neutral-600">
+                    <i data-lucide="file" class="w-4 h-4 text-neutral-400"></i>
+                    <input type="text" id="filename-input" value="untitled.txt" class="bg-transparent border-none outline-none text-sm w-48 text-white placeholder-neutral-500" placeholder="Filename...">
+                </div>
+
+                <button onclick="document.getElementById('file-input').click()" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Open File">
+                    <i data-lucide="folder-open" class="w-5 h-5 text-yellow-400"></i>
+                </button>
+                <input type="file" id="file-input" class="hidden">
+
+                <button id="save-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Save File">
+                    <i data-lucide="save" class="w-5 h-5 text-green-400"></i>
+                </button>
+
+                <div class="h-6 w-px bg-neutral-600 mx-1"></div>
+
+                <!-- Undo / Redo -->
+                <button id="undo-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Undo (Ctrl+Z)">
+                    <i data-lucide="undo-2" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="redo-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Redo (Ctrl+Y)">
+                    <i data-lucide="redo-2" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+
+                <div class="h-6 w-px bg-neutral-600 mx-1"></div>
+
+                <!-- Clipboard Controls -->
+                <button id="cut-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Cut">
+                    <i data-lucide="scissors" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="copy-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Copy">
+                    <i data-lucide="copy" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+                <button id="paste-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Paste">
+                    <i data-lucide="clipboard" class="w-5 h-5 text-neutral-400"></i>
+                </button>
+            </div>
+
+            <!-- Center: Language & Settings -->
+            <div class="flex items-center gap-3">
+                <select id="language-select" class="bg-neutral-700 text-sm border border-neutral-600 rounded px-2 py-1 outline-none focus:border-neutral-500 max-w-[160px]">
+                    <optgroup label="Editors">
+                        <option value="null">Plain Text (.txt)</option>
+                        <option value="richtext">Rich Text (.rtf)</option>
+                    </optgroup>
+                    <optgroup label="Web">
+                        <option value="text/javascript">JavaScript</option>
+                        <option value="text/html">HTML</option>
+                        <option value="text/css">CSS</option>
+                        <option value="application/x-httpd-php">PHP</option>
+                    </optgroup>
+                    <optgroup label="System/App">
+                        <option value="text/x-c++src">C++</option>
+                        <option value="text/x-csharp">C#</option>
+                        <option value="text/x-java">Java</option>
+                        <option value="text/x-python">Python</option>
+                        <option value="text/x-go">Go</option>
+                        <option value="text/x-rustsrc">Rust</option>
+                        <option value="text/x-ruby">Ruby</option>
+                    </optgroup>
+                    <optgroup label="Scripting">
+                        <option value="text/x-sh">Shell / Bash</option>
+                        <option value="application/x-powershell">PowerShell</option>
+                        <option value="text/x-lua">Lua</option>
+                    </optgroup>
+                    <optgroup label="Docs / Markup">
+                        <option value="text/x-markdown">Markdown (.md)</option>
+                    </optgroup>
+                    <optgroup label="Logs">
+                        <option value="text/x-logfile">Log File (.log)</option>
+                    </optgroup>
+                    <optgroup label="Data">
+                        <option value="application/json">JSON</option>
+                        <option value="text/csv">CSV</option>
+                        <option value="application/xml">XML</option>
+                        <option value="text/x-sql">SQL</option>
+                        <option value="text/x-yaml">YAML</option>
+                    </optgroup>
+                </select>
+
+                <select id="theme-select" class="bg-neutral-700 text-sm border border-neutral-600 rounded px-2 py-1 outline-none focus:border-neutral-500">
+                    <option value="material-darker">Dark (Material)</option>
+                    <option value="eclipse">Light (Eclipse)</option>
+                </select>
+
+                <!-- Format Button -->
+                <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code">
+                    <i data-lucide="wand-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-2">
+                <button id="help-btn" class="flex items-center gap-2 bg-neutral-700 hover:bg-neutral-600 border border-neutral-600 text-white px-3 py-1.5 rounded text-sm font-medium transition">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i> Help
+                </button>
+                <button id="preview-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition hidden">
+                    <i data-lucide="eye" class="w-4 h-4"></i> Preview
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Log Toolbar (Hidden by default) -->
+        <div id="log-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-neutral-300 font-bold uppercase mr-1">Logs</span>
+            <input id="log-filter-input" type="text" placeholder="Filter logs..." class="bg-neutral-600 text-white text-xs rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-56" />
+            <div class="h-4 w-px bg-neutral-500 mx-1"></div>
+            <span class="text-xs text-neutral-400">Severity:</span>
+            <button data-log-level="" class="log-level-chip px-2 py-0.5 rounded text-xs bg-neutral-500 text-white">All</button>
+            <button data-log-level="ERROR" class="log-level-chip px-2 py-0.5 rounded text-xs bg-neutral-600 text-red-400 hover:bg-neutral-500">ERROR</button>
+            <button data-log-level="WARN" class="log-level-chip px-2 py-0.5 rounded text-xs bg-neutral-600 text-amber-400 hover:bg-neutral-500">WARN</button>
+            <button data-log-level="INFO" class="log-level-chip px-2 py-0.5 rounded text-xs bg-neutral-600 text-blue-400 hover:bg-neutral-500">INFO</button>
+            <button data-log-level="DEBUG" class="log-level-chip px-2 py-0.5 rounded text-xs bg-neutral-600 text-neutral-400 hover:bg-neutral-500">DEBUG</button>
+            <div class="h-4 w-px bg-neutral-500 mx-1"></div>
+            <span id="log-line-info" class="text-xs text-neutral-400">0 lines</span>
+        </div>
+
+        <!-- Bottom Row: Rich Text Toolbar (Hidden by default) -->
+        <div id="richtext-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-1 flex-wrap">
+            
+            <!-- Text Style / Headings Dropdown -->
+            <div class="flex items-center gap-2 mr-2">
+                <select id="text-style-select" class="bg-neutral-600 text-white text-sm rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-32">
+                    <option value="P">Normal Text</option>
+                    <option value="H1">Title</option>
+                    <option value="H2">Subtitle</option>
+                    <option value="H3">Heading 1</option>
+                    <option value="H4">Heading 2</option>
+                    <option value="H5">Heading 3</option>
+                </select>
+            </div>
+
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+
+            <!-- Text Style -->
+            <button id="btn-bold" onmousedown="event.preventDefault();" onclick="formatDoc('bold')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bold"><i data-lucide="bold" class="w-4 h-4"></i></button>
+            <button id="btn-italic" onmousedown="event.preventDefault();" onclick="formatDoc('italic')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Italic"><i data-lucide="italic" class="w-4 h-4"></i></button>
+            <button id="btn-underline" onmousedown="event.preventDefault();" onclick="formatDoc('underline')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Underline"><i data-lucide="underline" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Alignment -->
+            <button id="btn-align-left" onmousedown="event.preventDefault();" onclick="formatDoc('justifyLeft')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Left"><i data-lucide="align-left" class="w-4 h-4"></i></button>
+            <button id="btn-align-center" onmousedown="event.preventDefault();" onclick="formatDoc('justifyCenter')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Center"><i data-lucide="align-center" class="w-4 h-4"></i></button>
+            <button id="btn-align-right" onmousedown="event.preventDefault();" onclick="formatDoc('justifyRight')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Right"><i data-lucide="align-right" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Lists -->
+            <button id="btn-list-ul" onmousedown="event.preventDefault();" onclick="formatDoc('insertUnorderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bullet List"><i data-lucide="list" class="w-4 h-4"></i></button>
+            <button id="btn-list-ol" onmousedown="event.preventDefault();" onclick="formatDoc('insertOrderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Numbered List"><i data-lucide="list-ordered" class="w-4 h-4"></i></button>
+            
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Link -->
+            <button onmousedown="event.preventDefault();" onclick="openLinkModal()" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Link"><i data-lucide="link" class="w-4 h-4"></i></button>
+
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+
+            <!-- Convert rich text to Markdown -->
+            <button id="btn-to-markdown" onmousedown="event.preventDefault();" onclick="convertRichTextToMarkdown()" class="p-1 hover:bg-neutral-600 rounded text-neutral-300 flex items-center gap-1" title="Convert document to Markdown">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+                <span class="text-xs font-semibold">MD</span>
+            </button>
+
+            <div class="h-4 w-px bg-neutral-500 mx-2"></div>
+            
+            <!-- Font Size Dropdown -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-neutral-400 font-bold uppercase">Size</span>
+                <select id="font-size-select" class="bg-neutral-600 text-white text-xs rounded px-1 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500">
+                    <option value="" disabled selected>--</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="26">26</option>
+                    <option value="28">28</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                    <option value="72">72</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Editor Container -->
+        <div id="editor-container" class="flex-1 relative w-full h-full bg-white">
+            <!-- CodeMirror Instance (Code Mode) -->
+            <div id="cm-wrapper" class="h-full w-full">
+                <textarea id="code-editor"></textarea>
+            </div>
+
+            <!-- Rich Text Instance (Visual Mode) -->
+            <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
+        </div>
+
+        <!-- Preview Pane (Hidden by default, used for HTML) -->
+        <div id="preview-pane" class="hidden flex-1 border-l border-neutral-700 bg-white relative">
+            <div class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Browser Preview</div>
+            <iframe id="preview-frame" class="w-full h-full border-none"></iframe>
+        </div>
+    </main>
+
+    <!-- Footer / Status Bar -->
+    <footer class="bg-neutral-800 border-t border-neutral-700 text-xs text-neutral-400 p-1 px-4 flex justify-between items-center select-none">
+        <div class="flex gap-4">
+            <span id="cursor-pos">Ln 1, Col 1</span>
+            <span id="doc-stats">0 Lines, 0 Chars</span>
+        </div>
+        
+        <div class="text-neutral-500 opacity-75">
+            Created by Jonas Lund 2025
+        </div>
+
+        <div>
+            <span>UTF-8</span>
+            <span class="mx-2">|</span>
+            <span id="mode-display">Plain Text</span>
+        </div>
+    </footer>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-white text-xl font-bold">Help & Information</h3>
+                <button onclick="closeHelpModal()" class="text-neutral-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto pr-2 text-sm text-neutral-300 flex-1 space-y-4">
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">How to Use the App</h4>
+                    <p>Text&Code Edit+ is a versatile editor that handles plain text, source code, rich documents, Markdown, and structured log files in one place.</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>Open / Save:</strong> Click the folder icon to open a file from your device, or drag and drop a file anywhere on the editor. Click the save icon (or press <kbd>Ctrl/Cmd+S</kbd>) to download the current file. The extension is appended automatically based on the language mode.</li>
+                        <li><strong>Language Mode:</strong> Pick the file format from the dropdown in the toolbar. Changing modes updates syntax highlighting, switches editor type, or toggles preview options.</li>
+                        <li><strong>Rich Text Editing:</strong> Selecting <em>Rich Text (.rtf)</em> opens a visual editor with headings, lists, font sizes, links, and alignment.</li>
+                        <li><strong>Code Formatting:</strong> In code mode, click the wand icon to auto-indent. In Markdown mode the wand normalises spacing and lists; in JSON mode it pretty-prints.</li>
+                        <li><strong>Browser Preview:</strong> The Preview button appears for HTML and Markdown files and opens a live rendered pane next to the editor.</li>
+                        <li><strong>Themes:</strong> Toggle between Dark (Material) and Light (Eclipse) using the theme dropdown.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">Markdown Support</h4>
+                    <p>Markdown is a first-class citizen. Select <strong>Markdown (.md)</strong> from the language dropdown to enable:</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>Syntax highlighting</strong> for headings, emphasis, links, code blocks, and lists.</li>
+                        <li><strong>Live Preview pane</strong> via the Preview button &mdash; renders the document as you type with a 500&nbsp;ms debounce.</li>
+                        <li><strong>Format (wand) button</strong> tidies up your Markdown: collapses excess blank lines, normalises list bullets to <code>-</code>, and trims trailing whitespace.</li>
+                        <li><strong>RTF &rarr; MD conversion:</strong> While in Rich Text mode, click the <kbd>MD</kbd> button in the formatting toolbar to convert your document to clean Markdown and switch into Markdown mode automatically.</li>
+                        <li><strong>Auto-detect:</strong> Opening a <code>.md</code> or <code>.markdown</code> file sets the mode for you.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">Log File Support</h4>
+                    <p>Select <strong>Log File (.log)</strong> from the dropdown to load the log viewer. Opening a <code>.log</code>, <code>.out</code>, or <code>.err</code> file detects it automatically.</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>Severity colours:</strong> <span class="text-rose-400 font-semibold">FATAL/CRITICAL</span>, <span class="text-red-400 font-semibold">ERROR</span>, <span class="text-amber-400 font-semibold">WARN</span>, <span class="text-blue-400">INFO</span>, and <span class="text-neutral-400 italic">DEBUG/TRACE</span> are colour-coded for fast scanning.</li>
+                        <li><strong>Timestamps</strong> in ISO-8601 (<code>2024-01-01T12:34:56.789Z</code>), space-separated, and Apache-style formats are highlighted in green.</li>
+                        <li><strong>IP addresses, URLs, HTTP methods, and status codes</strong> get their own colour for quick visual parsing.</li>
+                        <li><strong>Filter:</strong> Use the <em>Filter logs&hellip;</em> input that appears in the toolbar to hide lines that don&rsquo;t match a substring (case-insensitive). Leave blank to show everything.</li>
+                        <li><strong>Severity quick filter:</strong> Click the level chips (ERROR / WARN / INFO / DEBUG) to show only lines containing that level.</li>
+                        <li><strong>No line wrap</strong> &mdash; long log lines stay on a single line and scroll horizontally, the way most log tools display them.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">Keyboard Shortcuts</h4>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><kbd>Ctrl/Cmd + S</kbd> &mdash; Save current file</li>
+                        <li><kbd>Ctrl/Cmd + O</kbd> &mdash; Open file</li>
+                        <li><kbd>Ctrl/Cmd + Z</kbd> &mdash; Undo</li>
+                        <li><kbd>Ctrl/Cmd + Y</kbd> / <kbd>Shift + Ctrl + Z</kbd> &mdash; Redo</li>
+                        <li><kbd>Esc</kbd> &mdash; Close any open modal</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4 class="text-white font-semibold text-base mb-2">Supported File Types</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <strong class="text-white">Editors</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Plain Text (.txt)</li>
+                                <li>Rich Text (.rtf)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Web</strong>
+                            <ul class="list-disc pl-5">
+                                <li>HTML (.html)</li>
+                                <li>CSS (.css)</li>
+                                <li>JavaScript (.js)</li>
+                                <li>PHP (.php)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">System / App</strong>
+                            <ul class="list-disc pl-5">
+                                <li>C++ (.cpp)</li>
+                                <li>C# (.cs)</li>
+                                <li>Java (.java)</li>
+                                <li>Python (.py)</li>
+                                <li>Go (.go)</li>
+                                <li>Rust (.rs)</li>
+                                <li>Ruby (.rb)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Scripting</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Shell / Bash (.sh)</li>
+                                <li>PowerShell (.ps1)</li>
+                                <li>Lua (.lua)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Docs / Markup</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Markdown (.md, .markdown)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Logs</strong>
+                            <ul class="list-disc pl-5">
+                                <li>Log File (.log, .out, .err)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white">Data</strong>
+                            <ul class="list-disc pl-5">
+                                <li>JSON (.json)</li>
+                                <li>CSV (.csv)</li>
+                                <li>XML (.xml)</li>
+                                <li>SQL (.sql)</li>
+                                <li>YAML (.yaml)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeHelpModal()" class="px-4 py-2 bg-neutral-700 text-white rounded hover:bg-neutral-600 transition border border-neutral-600">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Modal -->
+    <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-96">
+            <h3 class="text-white text-lg font-bold mb-4">Insert Link</h3>
+            <input type="text" id="link-url-input" class="w-full bg-neutral-700 text-white border border-neutral-600 rounded px-3 py-2 mb-4 focus:outline-none focus:border-blue-500" placeholder="https://example.com">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLinkModal()" class="px-4 py-2 text-neutral-400 hover:text-white transition">Cancel</button>
+                <button onclick="insertLink()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Insert</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- CodeMirror Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    
+    <!-- CodeMirror Dependencies (Required by some modes like Rust) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+
+    <!-- CodeMirror Modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+    <!-- New Modes for Expanded Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/powershell/powershell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
+    
+    <!-- CodeMirror Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.js"></script>
+    
+    <!-- Addons for HTML Enhancements -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
+
+    <script>
+        // --- Custom CodeMirror modes ---
+
+        // Log file mode - colourises severity levels, timestamps, IPs, URLs, HTTP methods/statuses
+        CodeMirror.defineSimpleMode("logfile", {
+            start: [
+                // ISO-8601 timestamps (2024-01-01T12:34:56.789Z or 2024-01-01 12:34:56)
+                {regex: /\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?\b/, token: "log-timestamp"},
+                // Apache/CLF timestamps: [01/Jan/2024:12:34:56 +0000]
+                {regex: /\[\d{2}\/[A-Za-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2}[^\]]*\]/, token: "log-timestamp"},
+                // Syslog timestamps: Jan  1 12:34:56
+                {regex: /\b[A-Z][a-z]{2}\s+\d{1,2}\s\d{2}:\d{2}:\d{2}\b/, token: "log-timestamp"},
+                // Severity levels (case-sensitive, common in log lines)
+                {regex: /\b(?:FATAL|CRITICAL|SEVERE|PANIC)\b/, token: "log-fatal"},
+                {regex: /\b(?:ERROR|ERR)\b/, token: "log-error"},
+                {regex: /\b(?:WARN(?:ING)?)\b/, token: "log-warn"},
+                {regex: /\b(?:INFO|NOTICE)\b/, token: "log-info"},
+                {regex: /\b(?:DEBUG|TRACE|VERBOSE|VERB)\b/, token: "log-debug"},
+                // HTTP methods
+                {regex: /\b(?:GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\b/, token: "log-method"},
+                // HTTP status codes (3-digit at word boundary, only 100-599)
+                {regex: /\b[1-5]\d{2}\b(?=\s|"|$)/, token: "log-status"},
+                // URLs
+                {regex: /https?:\/\/\S+/, token: "log-url"},
+                // IP addresses (v4) with optional port
+                {regex: /\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b/, token: "log-ip"},
+                // Quoted strings
+                {regex: /"(?:[^"\\]|\\.)*"/, token: "string"},
+                {regex: /'(?:[^'\\]|\\.)*'/, token: "string"},
+                // Standalone numbers (last so HTTP statuses match first)
+                {regex: /\b\d+(?:\.\d+)?\b/, token: "number"},
+            ],
+            meta: { lineComment: "#" }
+        });
+
+        // --- Initialization ---
+        lucide.createIcons();
+
+        // 1. Defined Save Configuration for Extensions
+        const saveConfig = {
+            // Web
+            'text/javascript': { ext: '.js', mime: 'text/javascript' },
+            'text/html': { ext: '.html', mime: 'text/html' },
+            'text/css': { ext: '.css', mime: 'text/css' },
+            'application/x-httpd-php': { ext: '.php', mime: 'application/x-httpd-php' },
+            
+            // System
+            'text/x-c++src': { ext: '.cpp', mime: 'text/plain' },
+            'text/x-csharp': { ext: '.cs', mime: 'text/plain' },
+            'text/x-java': { ext: '.java', mime: 'text/plain' },
+            'text/x-python': { ext: '.py', mime: 'text/x-python' },
+            'text/x-go': { ext: '.go', mime: 'text/plain' },
+            'text/x-rustsrc': { ext: '.rs', mime: 'text/plain' },
+            'text/x-ruby': { ext: '.rb', mime: 'text/plain' },
+
+            // Scripting
+            'text/x-sh': { ext: '.sh', mime: 'application/x-sh' },
+            'application/x-powershell': { ext: '.ps1', mime: 'text/plain' },
+            'text/x-lua': { ext: '.lua', mime: 'text/plain' },
+            'text/x-markdown': { ext: '.md', mime: 'text/markdown' },
+
+            // Logs
+            'text/x-logfile': { ext: '.log', mime: 'text/plain' },
+
+            // Data
+            'application/xml': { ext: '.xml', mime: 'application/xml' },
+            'application/json': { ext: '.json', mime: 'application/json' },
+            'text/csv': { ext: '.csv', mime: 'text/csv' },
+            'text/x-sql': { ext: '.sql', mime: 'text/plain' },
+            'text/x-yaml': { ext: '.yaml', mime: 'text/plain' },
+
+            // Editors
+            'richtext': { ext: '.rtf', mime: 'text/html' },
+            'null': { ext: '.txt', mime: 'text/plain' }
+        };
+
+        // Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            lineNumbers: true,
+            mode: 'null',
+            theme: 'material-darker',
+            autoCloseBrackets: true,
+            autoCloseTags: true,
+            matchBrackets: true,
+            matchTags: {bothTags: true},
+            styleActiveLine: true,
+            lineWrapping: true,
+            scrollbarStyle: "simple",
+            indentUnit: 4,
+            tabSize: 4
+        });
+
+        // Set default content
+        editor.setValue(`Welcome to Text&Code Edit+!
+
+A versatile editor for code, rich documents, Markdown, and structured log files.
+
+==============================================
+QUICK START GUIDE
+==============================================
+
+1. SELECTING A MODE (Top Dropdown)
+   - Plain Text: For standard notes.
+   - Rich Text (.rtf): Visual document editing with Titles, Headings, Fonts, Lists, and Links.
+   - Code Modes: 20+ languages (JS, C++, Java, Python, Rust, SQL, etc.) with syntax highlighting.
+   - Markdown (.md): Syntax-highlighted editing with live preview and RTF-to-Markdown conversion.
+   - Log File (.log): Colour-coded severities, timestamps, IPs, and a substring/level filter.
+   - Data Modes: CSV, JSON, XML, YAML.
+
+2. TOOLBAR CONTROLS
+   - Undo/Redo, Cut/Copy/Paste available in every mode.
+   - Rich Text: Bold/Italic/Underline, Alignment, Lists, Headings, Fonts, and an "MD" button to convert to Markdown.
+   - Format (wand): Indent code, pretty-print JSON, normalise Markdown, trim log whitespace.
+
+3. KEYBOARD SHORTCUTS
+   - Ctrl/Cmd + S : Save current file
+   - Ctrl/Cmd + O : Open a file
+   - Ctrl/Cmd + Z / Y : Undo / Redo
+   - Drop any file onto the window to open it.
+
+4. PREVIEW
+   - HTML and Markdown both support a live Preview pane (the "Eye" icon).
+
+5. THEMES
+   - Toggle between Dark (Material) and Light (Eclipse) in the theme dropdown.
+
+Open the Help button (top right) for full documentation. Start typing below.`);
+
+        // --- DOM Elements ---
+        const filenameInput = document.getElementById('filename-input');
+        const fileInput = document.getElementById('file-input');
+        const languageSelect = document.getElementById('language-select');
+        const themeSelect = document.getElementById('theme-select');
+        const saveBtn = document.getElementById('save-btn');
+        const previewBtn = document.getElementById('preview-btn');
+        const previewPane = document.getElementById('preview-pane');
+        const previewFrame = document.getElementById('preview-frame');
+        const cursorPosEl = document.getElementById('cursor-pos');
+        const docStatsEl = document.getElementById('doc-stats');
+        const modeDisplayEl = document.getElementById('mode-display');
+        const formatBtn = document.getElementById('format-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        
+        // Rich Text Elements
+        const cmWrapper = document.getElementById('cm-wrapper');
+        const richTextEditor = document.getElementById('rich-text-editor');
+        const richTextToolbar = document.getElementById('richtext-toolbar');
+        const editorContainer = document.getElementById('editor-container');
+        const linkModal = document.getElementById('link-modal');
+        const linkInput = document.getElementById('link-url-input');
+        const fontSizeSelect = document.getElementById('font-size-select');
+        const textStyleSelect = document.getElementById('text-style-select');
+        const cutBtn = document.getElementById('cut-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const pasteBtn = document.getElementById('paste-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        // Log toolbar elements
+        const logToolbar = document.getElementById('log-toolbar');
+        const logFilterInput = document.getElementById('log-filter-input');
+        const logLineInfo = document.getElementById('log-line-info');
+        let activeLogLevel = '';
+
+        let savedSelectionRange = null;
+
+        // --- Theme Logic ---
+        function applyTheme(theme) {
+            editor.setOption('theme', theme);
+            
+            if (theme === 'material-darker') {
+                richTextEditor.classList.remove('bg-white', 'text-black');
+                richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                editorContainer.classList.remove('bg-white');
+                editorContainer.classList.add('bg-neutral-800');
+            } else {
+                richTextEditor.classList.remove('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                richTextEditor.classList.add('bg-white', 'text-black');
+                editorContainer.classList.remove('bg-neutral-800');
+                editorContainer.classList.add('bg-white');
+            }
+        }
+
+        // --- Undo / Redo Logic ---
+        undoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('undo');
+            } else {
+                editor.undo();
+                editor.focus();
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('redo');
+            } else {
+                editor.redo();
+                editor.focus();
+            }
+        });
+
+        // --- Clipboard Logic ---
+        function focusActiveEditor() {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                return 'rich';
+            } else {
+                editor.focus();
+                return 'code';
+            }
+        }
+
+        cutBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('cut');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('copy');
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            const active = focusActiveEditor();
+            try {
+                // Modern Async Clipboard API
+                const text = await navigator.clipboard.readText();
+                if (active === 'rich') {
+                    document.execCommand('insertText', false, text);
+                } else {
+                    editor.replaceSelection(text);
+                }
+            } catch (err) {
+                // Fallback or Blocked
+                alert("Paste was blocked by your browser. Please use the keyboard shortcut (Ctrl+V / Cmd+V).");
+            }
+        });
+
+        // --- Rich Text Logic ---
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            richTextEditor.focus();
+            updateRTFToolbarState(); // Instant feedback
+        }
+
+        // Change Text Style (P, H1, H2, etc.)
+        textStyleSelect.addEventListener('change', (e) => {
+            const tag = e.target.value;
+            document.execCommand('formatBlock', false, tag);
+            richTextEditor.focus();
+            updateRTFToolbarState();
+        });
+
+        // Custom Font Size Logic (Pixel precise)
+        function changeFontSize(size) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (range.collapsed) return; // Don't do anything if no text selected
+
+                // We must use a wrapper because execCommand fontSize only supports 1-7
+                const span = document.createElement("span");
+                span.style.fontSize = size + "pt";
+                
+                try {
+                    // Extract contents returns a document fragment
+                    const contents = range.extractContents();
+                    span.appendChild(contents);
+                    range.insertNode(span);
+                    
+                    // Cleanup selection
+                    selection.removeAllRanges();
+                } catch (e) {
+                    console.error("Font size error:", e);
+                }
+            }
+            richTextEditor.focus();
+            updateRTFToolbarState();
+        }
+
+        // Helper to toggle button active state
+        function highlightButton(id, isActive) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            
+            if (isActive) {
+                btn.classList.add('bg-neutral-500', 'text-white');
+                btn.classList.remove('text-neutral-300', 'hover:bg-neutral-600');
+            } else {
+                btn.classList.remove('bg-neutral-500', 'text-white');
+                btn.classList.add('text-neutral-300', 'hover:bg-neutral-600');
+            }
+        }
+
+        // Detect current format and update toolbar
+        function updateRTFToolbarState() {
+             if (richTextEditor.classList.contains('hidden')) return;
+             
+             // 1. Button States
+             highlightButton('btn-bold', document.queryCommandState('bold'));
+             highlightButton('btn-italic', document.queryCommandState('italic'));
+             highlightButton('btn-underline', document.queryCommandState('underline'));
+             highlightButton('btn-align-left', document.queryCommandState('justifyLeft'));
+             highlightButton('btn-align-center', document.queryCommandState('justifyCenter'));
+             highlightButton('btn-align-right', document.queryCommandState('justifyRight'));
+             highlightButton('btn-list-ul', document.queryCommandState('insertUnorderedList'));
+             highlightButton('btn-list-ol', document.queryCommandState('insertOrderedList'));
+
+             // 2. Block Style (H1, H2, P) Detection
+             const selection = window.getSelection();
+             if (selection.rangeCount > 0) {
+                 let node = selection.anchorNode;
+                 if (node.nodeType === 3) node = node.parentNode; // Text node -> element
+                 
+                 // Ensure we are inside editor
+                 if (richTextEditor.contains(node) || node === richTextEditor) {
+                     let currentTag = node.nodeName;
+                     // If current tag is invalid for dropdown (e.g. STRONG), climb up
+                     while (node && node !== richTextEditor && !['H1','H2','H3','H4','H5','P','DIV'].includes(node.nodeName)) {
+                         node = node.parentNode;
+                     }
+                     if (node && node !== richTextEditor) {
+                         textStyleSelect.value = node.nodeName;
+                     } else {
+                         textStyleSelect.value = "P";
+                     }
+                 }
+             }
+
+             // 3. Font Size Logic
+             if (selection.rangeCount === 0) return;
+             
+             let node = selection.anchorNode;
+             // Ensure we are inside the editor
+             if (!richTextEditor.contains(node) && node !== richTextEditor) return;
+             
+             if (node.nodeType === 3) node = node.parentNode; // Get element from text node
+             
+             const computedStyle = window.getComputedStyle(node);
+             const fontSizePx = parseFloat(computedStyle.fontSize);
+             
+             // Convert px to pt (standard browser assumption: 1pt = 1.333px, so px * 0.75 = pt)
+             const fontSizePt = Math.round(fontSizePx * 0.75);
+             
+             // Update dropdown if the value matches one of our options
+             let found = false;
+             for(let i=0; i<fontSizeSelect.options.length; i++) {
+                 if (fontSizeSelect.options[i].value == fontSizePt) {
+                     fontSizeSelect.selectedIndex = i;
+                     found = true;
+                     break;
+                 }
+             }
+             if (!found) fontSizeSelect.value = "";
+        }
+
+        richTextEditor.addEventListener('mouseup', updateRTFToolbarState);
+        richTextEditor.addEventListener('keyup', updateRTFToolbarState);
+
+        fontSizeSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                changeFontSize(e.target.value);
+            }
+        });
+
+
+        // --- Help Modal Logic ---
+        function openHelpModal() {
+            helpModal.classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            helpModal.classList.add('hidden');
+        }
+
+        // Expose to window for inline onclick handler
+        window.closeHelpModal = closeHelpModal;
+
+        helpBtn.addEventListener('click', openHelpModal);
+
+        // --- Link Modal Logic ---
+        function openLinkModal() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (richTextEditor.contains(range.commonAncestorContainer)) {
+                    savedSelectionRange = range;
+                } else {
+                    savedSelectionRange = null;
+                }
+            } else {
+                savedSelectionRange = null;
+            }
+
+            if (!savedSelectionRange || savedSelectionRange.collapsed) {
+                alert("Please select the text you want to link first.");
+                return;
+            }
+
+            linkModal.classList.remove('hidden');
+            linkInput.focus();
+        }
+
+        function closeLinkModal() {
+            linkModal.classList.add('hidden');
+            linkInput.value = '';
+        }
+
+        function insertLink() {
+            const url = linkInput.value;
+            closeLinkModal();
+
+            if (url && savedSelectionRange) {
+                richTextEditor.focus();
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedSelectionRange);
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        linkInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') insertLink();
+            if (e.key === 'Escape') closeLinkModal();
+        });
+
+        // --- Event Listeners & Logic ---
+
+        editor.on('cursorActivity', () => {
+            const pos = editor.getCursor();
+            cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+        });
+
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+
+        languageSelect.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            handleModeSwitch(mode);
+        });
+
+        // --- Format Button (dispatches by mode) ---
+        formatBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) return;
+            const mode = languageSelect.value;
+
+            if (mode === 'application/json') {
+                try {
+                    const parsed = JSON.parse(editor.getValue());
+                    editor.setValue(JSON.stringify(parsed, null, 4));
+                } catch (err) {
+                    alert("Invalid JSON: " + err.message);
+                    return;
+                }
+            } else if (mode === 'text/x-markdown') {
+                editor.setValue(formatMarkdown(editor.getValue()));
+            } else if (mode === 'text/x-logfile') {
+                // For logs, "format" trims trailing whitespace from every line
+                const lines = editor.getValue().split('\n').map(l => l.replace(/[ \t]+$/, ''));
+                editor.setValue(lines.join('\n'));
+            } else {
+                const lineCount = editor.lineCount();
+                for (let i = 0; i < lineCount; i++) {
+                    editor.indentLine(i, "smart");
+                }
+            }
+            editor.focus();
+        });
+
+        // --- Markdown <-> HTML helpers ---
+
+        function htmlToMarkdown(html) {
+            const container = document.createElement('div');
+            container.innerHTML = html;
+
+            const walk = (node) => {
+                let out = '';
+                for (const child of node.childNodes) {
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        out += child.textContent;
+                    } else if (child.nodeType === Node.ELEMENT_NODE) {
+                        const inner = walk(child);
+                        switch (child.nodeName) {
+                            case 'H1': out += '\n# '   + inner.trim() + '\n\n'; break;
+                            case 'H2': out += '\n## '  + inner.trim() + '\n\n'; break;
+                            case 'H3': out += '\n### ' + inner.trim() + '\n\n'; break;
+                            case 'H4': out += '\n#### ' + inner.trim() + '\n\n'; break;
+                            case 'H5': out += '\n##### ' + inner.trim() + '\n\n'; break;
+                            case 'H6': out += '\n###### ' + inner.trim() + '\n\n'; break;
+                            case 'STRONG': case 'B': out += '**' + inner + '**'; break;
+                            case 'EM': case 'I':    out += '*'  + inner + '*';  break;
+                            case 'U': out += '<u>' + inner + '</u>'; break;
+                            case 'CODE': out += '`' + inner + '`'; break;
+                            case 'PRE':  out += '\n```\n' + inner.replace(/\n$/, '') + '\n```\n\n'; break;
+                            case 'A':    out += '[' + inner + '](' + (child.getAttribute('href') || '') + ')'; break;
+                            case 'IMG':  out += '![' + (child.getAttribute('alt') || '') + '](' + (child.getAttribute('src') || '') + ')'; break;
+                            case 'BR':   out += '  \n'; break;
+                            case 'HR':   out += '\n---\n\n'; break;
+                            case 'P':    out += inner.trim() + '\n\n'; break;
+                            case 'DIV':  out += inner + (inner.endsWith('\n') ? '' : '\n'); break;
+                            case 'BLOCKQUOTE': out += '> ' + inner.trim().replace(/\n/g, '\n> ') + '\n\n'; break;
+                            case 'UL': out += listToMd(child, '- ') + '\n'; break;
+                            case 'OL': out += listToMd(child, null) + '\n'; break;
+                            case 'LI': out += inner; break;
+                            default:   out += inner;
+                        }
+                    }
+                }
+                return out;
+            };
+
+            const listToMd = (listEl, marker) => {
+                let result = '';
+                let idx = 1;
+                for (const li of listEl.children) {
+                    if (li.nodeName !== 'LI') continue;
+                    const prefix = marker !== null ? marker : (idx++) + '. ';
+                    const inner = walk(li).trim();
+                    // Indent any continuation lines
+                    const padded = inner.split('\n').map((l, i) => i === 0 ? l : '  ' + l).join('\n');
+                    result += prefix + padded + '\n';
+                }
+                return result;
+            };
+
+            return walk(container)
+                .replace(/&nbsp;/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim() + '\n';
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function markdownToHtml(md) {
+            const codeBlocks = [];
+            // Pull out fenced code blocks first so their contents aren't processed
+            let html = md.replace(/```([a-z0-9_+-]*)\n([\s\S]*?)```/gi, (m, lang, code) => {
+                const i = codeBlocks.push('<pre><code>' + escapeHtml(code.replace(/\n$/, '')) + '</code></pre>') - 1;
+                return '@@CB' + i + '@@';
+            });
+
+            // Escape remaining HTML
+            html = escapeHtml(html);
+
+            // Inline code
+            html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
+
+            // Headings (must be at line start)
+            html = html.replace(/^######\s+(.*)$/gm, '<h6>$1</h6>');
+            html = html.replace(/^#####\s+(.*)$/gm,  '<h5>$1</h5>');
+            html = html.replace(/^####\s+(.*)$/gm,   '<h4>$1</h4>');
+            html = html.replace(/^###\s+(.*)$/gm,    '<h3>$1</h3>');
+            html = html.replace(/^##\s+(.*)$/gm,     '<h2>$1</h2>');
+            html = html.replace(/^#\s+(.*)$/gm,      '<h1>$1</h1>');
+
+            // Horizontal rules
+            html = html.replace(/^\s*(?:---|\*\*\*|___)\s*$/gm, '<hr>');
+
+            // Blockquotes (collapse consecutive lines)
+            html = html.replace(/(?:^&gt; .*(?:\n|$))+?/gm, (block) => {
+                const inner = block.split('\n').filter(Boolean).map(l => l.replace(/^&gt; ?/, '')).join('<br>');
+                return '<blockquote>' + inner + '</blockquote>\n';
+            });
+
+            // Images and links
+            html = html.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, '<img alt="$1" src="$2">');
+            html = html.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, '<a href="$2">$1</a>');
+
+            // Bold/italic (bold first, longest first)
+            html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+            html = html.replace(/___([^_]+)___/g,       '<strong><em>$1</em></strong>');
+            html = html.replace(/\*\*([^*]+)\*\*/g,     '<strong>$1</strong>');
+            html = html.replace(/__([^_]+)__/g,         '<strong>$1</strong>');
+            html = html.replace(/\*([^*\n]+)\*/g,       '<em>$1</em>');
+            html = html.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+
+            // Unordered lists
+            html = html.replace(/(?:^[-*+]\s+.+(?:\n|$))+/gm, (block) => {
+                const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^[-*+]\s+/, '') + '</li>').join('');
+                return '<ul>' + items + '</ul>\n';
+            });
+            // Ordered lists
+            html = html.replace(/(?:^\d+\.\s+.+(?:\n|$))+/gm, (block) => {
+                const items = block.trim().split('\n').map(l => '<li>' + l.replace(/^\d+\.\s+/, '') + '</li>').join('');
+                return '<ol>' + items + '</ol>\n';
+            });
+
+            // Wrap remaining loose lines in paragraphs
+            html = html.split(/\n{2,}/).map(chunk => {
+                if (!chunk.trim()) return '';
+                if (/^\s*<(h\d|ul|ol|li|pre|blockquote|hr|table|p|img|div)/i.test(chunk.trim())) return chunk;
+                return '<p>' + chunk.replace(/\n/g, '<br>') + '</p>';
+            }).join('\n');
+
+            // Restore code blocks
+            html = html.replace(/@@CB(\d+)@@/g, (m, i) => codeBlocks[+i]);
+            return html;
+        }
+
+        function formatMarkdown(md) {
+            return md
+                .split('\n')
+                .map(l => l.replace(/[ \t]+$/, ''))      // trim trailing whitespace
+                .join('\n')
+                .replace(/\n{3,}/g, '\n\n')              // collapse 3+ blank lines
+                .replace(/^[*+]\s+/gm, '- ')             // normalise list bullets
+                .replace(/^\s*$/gm, '')                  // pure-whitespace lines become empty
+                .replace(/\n+$/, '\n');                  // ensure single trailing newline
+        }
+
+        function convertRichTextToMarkdown() {
+            // handleModeSwitch performs HTML->MD conversion when leaving RTF mode,
+            // so we just point the dropdown at Markdown and let it run.
+            languageSelect.value = 'text/x-markdown';
+            const fn = filenameInput.value.trim().replace(/\.[a-z0-9]+$/i, '') || 'document';
+            filenameInput.value = fn + '.md';
+            handleModeSwitch('text/x-markdown');
+        }
+        window.convertRichTextToMarkdown = convertRichTextToMarkdown;
+
+        // --- Log filter helpers ---
+
+        function applyLogFilter() {
+            if (languageSelect.value !== 'text/x-logfile') return;
+            const filterText = (logFilterInput.value || '').toLowerCase();
+            const level = activeLogLevel;
+            const totalLines = editor.lineCount();
+            let visible = 0;
+
+            for (let i = 0; i < totalLines; i++) {
+                const line = editor.getLine(i) || '';
+                let show = true;
+                if (filterText && !line.toLowerCase().includes(filterText)) show = false;
+                if (show && level) {
+                    const re = new RegExp('\\b' + level + '\\b');
+                    if (!re.test(line)) show = false;
+                }
+                if (show) {
+                    visible++;
+                    if (editor.lineInfo(i)?.textClass === 'log-hidden') {
+                        editor.removeLineClass(i, 'text', 'log-hidden');
+                    }
+                } else {
+                    editor.addLineClass(i, 'text', 'log-hidden');
+                }
+            }
+            logLineInfo.textContent = (filterText || level)
+                ? `${visible} / ${totalLines} lines`
+                : `${totalLines} lines`;
+        }
+
+        function clearLogFilter() {
+            const totalLines = editor.lineCount();
+            for (let i = 0; i < totalLines; i++) {
+                editor.removeLineClass(i, 'text', 'log-hidden');
+            }
+            activeLogLevel = '';
+            if (logFilterInput) logFilterInput.value = '';
+            document.querySelectorAll('.log-level-chip').forEach((chip) => {
+                if (chip.dataset.logLevel === '') {
+                    chip.classList.add('bg-neutral-500', 'text-white');
+                    chip.classList.remove('bg-neutral-600');
+                } else {
+                    chip.classList.remove('bg-neutral-500', 'text-white');
+                    chip.classList.add('bg-neutral-600');
+                }
+            });
+        }
+
+        function updateLogStats() {
+            logLineInfo.textContent = `${editor.lineCount()} lines`;
+        }
+
+        logFilterInput.addEventListener('input', applyLogFilter);
+
+        document.querySelectorAll('.log-level-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                activeLogLevel = chip.dataset.logLevel || '';
+                document.querySelectorAll('.log-level-chip').forEach((c) => {
+                    if (c === chip) {
+                        c.classList.add('bg-neutral-500', 'text-white');
+                        c.classList.remove('bg-neutral-600');
+                    } else {
+                        c.classList.remove('bg-neutral-500', 'text-white');
+                        c.classList.add('bg-neutral-600');
+                    }
+                });
+                applyLogFilter();
+            });
+        });
+
+        // --- Preview helpers ---
+
+        let isPreviewActive = false;
+
+        function updatePreview() {
+            const mode = languageSelect.value;
+            if (mode === 'text/html') {
+                previewFrame.srcdoc = editor.getValue();
+            } else if (mode === 'text/x-markdown') {
+                const rendered = markdownToHtml(editor.getValue());
+                previewFrame.srcdoc =
+                    '<!doctype html><html><head><meta charset="utf-8"><style>' +
+                    'body{font-family:Segoe UI,Tahoma,Geneva,sans-serif;color:#1f2937;padding:32px 40px;line-height:1.65;max-width:900px;margin:0 auto;}' +
+                    'h1,h2{border-bottom:1px solid #e5e7eb;padding-bottom:0.2em;}' +
+                    'code{background:#f3f4f6;padding:1px 5px;border-radius:3px;font-family:Fira Code,Consolas,monospace;font-size:0.9em;}' +
+                    'pre{background:#f3f4f6;padding:12px;border-radius:6px;overflow-x:auto;}' +
+                    'pre code{background:transparent;padding:0;}' +
+                    'blockquote{border-left:4px solid #d1d5db;color:#4b5563;padding:0 1em;margin:0.5em 0;}' +
+                    'a{color:#2563eb;}img{max-width:100%;}hr{border:none;border-top:1px solid #e5e7eb;}' +
+                    'ul,ol{padding-left:1.6em;}' +
+                    '</style></head><body>' + rendered + '</body></html>';
+            }
+        }
+
+        // Extension aliases — extensions handled by the inverse lookup in saveConfig
+        // by default. This map only covers aliases (e.g. .markdown -> .md).
+        const extensionAliases = {
+            'markdown': 'text/x-markdown',
+            'mkd': 'text/x-markdown',
+            'out': 'text/x-logfile',
+            'err': 'text/x-logfile',
+            'ts': 'text/javascript',
+            'mjs': 'text/javascript',
+            'cjs': 'text/javascript',
+            'htm': 'text/html',
+            'yml': 'text/x-yaml'
+        };
+
+        function handleModeSwitch(mode) {
+            const optionText = languageSelect.options[languageSelect.selectedIndex].text;
+            modeDisplayEl.textContent = optionText;
+
+            // Always hide log toolbar; we re-show it below if needed
+            logToolbar.classList.add('hidden');
+
+            if (mode === 'richtext') {
+                const currentContent = editor.getValue();
+                if (/<[a-z][\s\S]*>/i.test(currentContent)) {
+                     richTextEditor.innerHTML = currentContent;
+                } else {
+                    richTextEditor.innerHTML = currentContent.replace(/\n/g, '<br>');
+                }
+
+                cmWrapper.classList.add('hidden');
+                richTextEditor.classList.remove('hidden');
+                richTextToolbar.classList.remove('hidden');
+                previewBtn.classList.add('hidden');
+                previewPane.classList.add('hidden');
+                formatBtn.classList.add('hidden');
+
+            } else {
+                if (!richTextEditor.classList.contains('hidden')) {
+                    if (mode === 'text/html') {
+                         editor.setValue(richTextEditor.innerHTML);
+                    } else if (mode === 'text/x-markdown') {
+                        editor.setValue(htmlToMarkdown(richTextEditor.innerHTML));
+                    } else {
+                        editor.setValue(richTextEditor.innerText);
+                    }
+                }
+
+                cmWrapper.classList.remove('hidden');
+                richTextEditor.classList.add('hidden');
+                richTextToolbar.classList.add('hidden');
+                formatBtn.classList.remove('hidden');
+
+                // CodeMirror mode resolution
+                let cmMode;
+                if (mode === 'null' || mode === 'text/csv') {
+                    cmMode = null;
+                } else if (mode === 'text/x-logfile') {
+                    cmMode = 'logfile';
+                } else {
+                    cmMode = mode;
+                }
+                editor.setOption('mode', cmMode);
+
+                // Log mode display tweaks: disable line wrap so long lines scroll horizontally
+                if (mode === 'text/x-logfile') {
+                    editor.setOption('lineWrapping', false);
+                    editor.getWrapperElement().classList.add('log-view');
+                    logToolbar.classList.remove('hidden');
+                    updateLogStats();
+                    applyLogFilter();
+                } else {
+                    editor.setOption('lineWrapping', true);
+                    editor.getWrapperElement().classList.remove('log-view');
+                    clearLogFilter();
+                }
+
+                editor.refresh();
+
+                // Preview button: HTML and Markdown both support live preview
+                if (mode === 'text/html' || mode === 'text/x-markdown') {
+                    previewBtn.classList.remove('hidden');
+                    if (isPreviewActive) updatePreview();
+                } else {
+                    previewBtn.classList.add('hidden');
+                    previewPane.classList.add('hidden');
+                    isPreviewActive = false;
+                }
+            }
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                filenameInput.value = file.name;
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                let mode = 'null';
+
+                // Inverse lookup: extension -> mode key
+                for (const [m, config] of Object.entries(saveConfig)) {
+                    if (config.ext === '.' + ext) {
+                        mode = m;
+                        break;
+                    }
+                }
+
+                // Aliases (e.g. .markdown -> Markdown, .out/.err -> Log)
+                if (mode === 'null' && extensionAliases[ext]) {
+                    mode = extensionAliases[ext];
+                }
+                
+                // Fallback for unknown extensions
+                let foundOption = false;
+                for (let i = 0; i < languageSelect.options.length; i++) {
+                    const opt = languageSelect.options[i];
+                    if (opt.value === mode) {
+                        languageSelect.selectedIndex = i;
+                        foundOption = true;
+                        break;
+                    }
+                }
+                if (!foundOption) {
+                    languageSelect.value = 'null';
+                    mode = 'null';
+                }
+
+                if (mode === 'richtext') {
+                    richTextEditor.innerHTML = content;
+                    handleModeSwitch('richtext');
+                } else {
+                    editor.setValue(content);
+                    handleModeSwitch(mode);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Save Logic ---
+        function saveCurrentFile() {
+            const mode = languageSelect.value;
+            const config = saveConfig[mode] || saveConfig['null'];
+
+            let filename = filenameInput.value.trim() || 'untitled';
+
+            // Auto-correct extension: strip any known extension, then append the correct one
+            const dotIndex = filename.lastIndexOf('.');
+            if (dotIndex !== -1) {
+                const existingExt = filename.substring(dotIndex);
+                const isSupportedExt = Object.values(saveConfig).some(c => c.ext === existingExt);
+                if (isSupportedExt) {
+                    filename = filename.substring(0, dotIndex);
+                }
+            }
+            filename = filename + config.ext;
+            filenameInput.value = filename;
+
+            // Get Content
+            let content = '';
+            if (mode === 'richtext') {
+                content = richTextEditor.innerHTML;
+            } else {
+                content = editor.getValue();
+            }
+
+            const blob = new Blob([content], { type: config.mime });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        saveBtn.addEventListener('click', saveCurrentFile);
+
+        // --- Preview Button (HTML + Markdown) ---
+        previewBtn.addEventListener('click', () => {
+            isPreviewActive = !isPreviewActive;
+            if (isPreviewActive) {
+                previewPane.classList.remove('hidden');
+                editor.setSize(null, '100%');
+                updatePreview();
+            } else {
+                previewPane.classList.add('hidden');
+            }
+        });
+
+        // Single consolidated change handler: doc stats + log filter + preview refresh
+        editor.on('change', () => {
+            const text = editor.getValue();
+            docStatsEl.textContent = `${editor.lineCount()} Lines, ${text.length} Chars`;
+
+            const mode = languageSelect.value;
+
+            if (mode === 'text/x-logfile') {
+                clearTimeout(window.logFilterTimeout);
+                window.logFilterTimeout = setTimeout(() => {
+                    updateLogStats();
+                    applyLogFilter();
+                }, 200);
+            }
+
+            if (isPreviewActive && (mode === 'text/html' || mode === 'text/x-markdown')) {
+                clearTimeout(window.previewTimeout);
+                window.previewTimeout = setTimeout(updatePreview, 500);
+            }
+        });
+
+        // --- Keyboard Shortcuts (global) ---
+        document.addEventListener('keydown', (e) => {
+            const meta = e.ctrlKey || e.metaKey;
+            if (!meta) {
+                if (e.key === 'Escape') {
+                    if (!helpModal.classList.contains('hidden')) closeHelpModal();
+                    if (!linkModal.classList.contains('hidden')) closeLinkModal();
+                }
+                return;
+            }
+            const key = e.key.toLowerCase();
+            if (key === 's') {
+                e.preventDefault();
+                saveCurrentFile();
+            } else if (key === 'o') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
+        // --- Drag and drop file open ---
+        ['dragenter', 'dragover'].forEach(ev => {
+            document.addEventListener(ev, (e) => {
+                if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+                    e.preventDefault();
+                    document.body.classList.add('drag-over');
+                }
+            });
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            document.addEventListener(ev, (e) => {
+                if (ev === 'dragleave' && e.relatedTarget) return;
+                document.body.classList.remove('drag-over');
+            });
+        });
+        document.addEventListener('drop', (e) => {
+            if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+            e.preventDefault();
+            // Re-use the existing file input pipeline
+            const dt = new DataTransfer();
+            dt.items.add(e.dataTransfer.files[0]);
+            fileInput.files = dt.files;
+            fileInput.dispatchEvent(new Event('change'));
+        });
+
+        applyTheme('material-darker');
+        handleModeSwitch('null');
+
+        // Re-render Lucide icons for any nodes added after initial scan
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>
