@@ -80,7 +80,6 @@
 
     <!-- Navbar / Toolbar -->
     <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col shrink-0">
-        <!-- Top Row: File Controls -->
         <div class="flex items-center justify-between p-2 px-4 flex-wrap gap-2">
             
             <!-- Left: Logo & File Controls -->
@@ -179,12 +178,10 @@
                     <option value="eclipse">Light (Eclipse)</option>
                 </select>
 
-                <!-- Format Button -->
                 <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code / Prettify JSON">
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Full Documentation Modal Button -->
                 <button id="help-modal-btn" onclick="openDocsModal()" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Open Full Documentation & Help">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                 </button>
@@ -198,7 +195,7 @@
             </div>
         </div>
 
-        <!-- Bottom Row: Rich Text Toolbar (Hidden by default) -->
+        <!-- Rich Text Toolbar -->
         <div id="richtext-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-1 flex-wrap">
             <div class="flex items-center gap-2 mr-2">
                 <select id="text-style-select" class="bg-neutral-600 text-white text-sm rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-32">
@@ -293,16 +290,13 @@
     <!-- Main Workspace -->
     <main class="flex-1 flex overflow-hidden relative min-h-0 w-full">
         <div id="editor-container" class="flex-1 relative w-full h-full bg-white min-h-0">
-            <!-- CodeMirror Instance -->
             <div id="cm-wrapper" class="h-full w-full">
                 <textarea id="code-editor"></textarea>
             </div>
 
-            <!-- Rich Text Instance -->
             <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
         </div>
 
-        <!-- Preview Pane -->
         <div id="preview-pane" class="hidden flex-1 border-l border-neutral-700 bg-white relative">
             <div id="preview-tag" class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Live Preview</div>
             <iframe id="preview-frame" class="w-full h-full border-none"></iframe>
@@ -331,7 +325,6 @@
     <!-- Full Documentation Modal -->
     <div id="docs-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-neutral-800 border border-neutral-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
-            <!-- Modal Header -->
             <div class="p-4 border-b border-neutral-700 flex items-center justify-between bg-neutral-900/50">
                 <div class="flex items-center gap-2 text-white font-bold text-lg">
                     <i data-lucide="book-open" class="text-purple-400"></i>
@@ -342,9 +335,7 @@
                 </button>
             </div>
 
-            <!-- Modal Content Body -->
             <div class="flex-1 flex overflow-hidden">
-                <!-- Sidebar Tabs -->
                 <div class="w-48 bg-neutral-900/40 border-r border-neutral-700 p-2 flex flex-col gap-1 text-sm font-medium">
                     <button onclick="switchTab('tab-overview')" id="nav-tab-overview" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-purple-400 bg-neutral-700/60">
                         <i data-lucide="compass" class="w-4 h-4"></i> Overview
@@ -363,14 +354,10 @@
                     </button>
                 </div>
 
-                <!-- Documentation Content Area -->
                 <div class="flex-1 p-6 overflow-y-auto text-sm leading-relaxed text-neutral-300">
-                    
-                    <!-- Overview Tab -->
                     <div id="tab-overview" class="docs-tab-content space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Welcome to Text&Code Edit+</h2>
                         <p><strong>Text&Code Edit+</strong> is a high-performance web-based editor built for both document drafting and full-stack software development. It blends a robust visual rich-text canvas with a full-featured CodeMirror editor supporting over 20 programming and data languages.</p>
-                        
                         <div class="grid grid-cols-2 gap-4 mt-4">
                             <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-700/60">
                                 <h3 class="font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-blue-400"></i> Smart Language Engine</h3>
@@ -383,88 +370,53 @@
                         </div>
                     </div>
 
-                    <!-- Features Tab -->
                     <div id="tab-features" class="docs-tab-content hidden space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Core Features & Shortcuts</h2>
                         <ul class="space-y-3">
                             <li class="flex items-start gap-3">
                                 <i data-lucide="wand-2" class="w-5 h-5 text-yellow-400 mt-0.5"></i>
-                                <div>
-                                    <strong class="text-white">Magic Wand Code Formatter:</strong> Automatically cleans up indentation in code modes, or parses and pretty-prints minified JSON structures with a single click.
-                                </div>
+                                <div><strong class="text-white">Magic Wand Code Formatter:</strong> Automatically cleans up indentation in code modes, or parses and pretty-prints minified JSON structures with a single click.</div>
                             </li>
                             <li class="flex items-start gap-3">
                                 <i data-lucide="eye" class="w-5 h-5 text-blue-400 mt-0.5"></i>
-                                <div>
-                                    <strong class="text-white">Live Preview Pane:</strong> Real-time browser preview rendered for both HTML files and Markdown (.md) documents using <code class="bg-neutral-900 px-1 rounded">marked.js</code>.
-                                </div>
+                                <div><strong class="text-white">Live Preview Pane:</strong> Real-time browser preview rendered for both HTML files and Markdown (.md) documents using <code class="bg-neutral-900 px-1 rounded">marked.js</code>.</div>
                             </li>
                             <li class="flex items-start gap-3">
                                 <i data-lucide="save" class="w-5 h-5 text-green-400 mt-0.5"></i>
-                                <div>
-                                    <strong class="text-white">Intelligent File Saving:</strong> Automatically attaches the correct extension (e.g., <code class="bg-neutral-900 px-1 rounded">.py</code>, <code class="bg-neutral-900 px-1 rounded">.yaml</code>, <code class="bg-neutral-900 px-1 rounded">.rtf</code>) based on active language selection.
-                                </div>
+                                <div><strong class="text-white">Intelligent File Saving:</strong> Automatically attaches the correct extension based on active language selection.</div>
                             </li>
                         </ul>
                     </div>
 
-                    <!-- Code Modes Tab -->
                     <div id="tab-modes" class="docs-tab-content hidden space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Supported Language Modes</h2>
-                        <p>Text&Code Edit+ provides full syntax highlighting, bracket matching, and auto-closing tags across these categories:</p>
                         <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
-                                <strong class="text-purple-400 block mb-1">Web Languages</strong>
-                                JavaScript (.js), HTML (.html), CSS (.css), PHP (.php)
-                            </div>
-                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
-                                <strong class="text-blue-400 block mb-1">System & Application</strong>
-                                C++, C#, Java, Python (.py), Go, Rust (.rs), Ruby
-                            </div>
-                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
-                                <strong class="text-green-400 block mb-1">Scripting & Markup</strong>
-                                Bash/Shell, PowerShell, Lua, Markdown (.md)
-                            </div>
-                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
-                                <strong class="text-yellow-400 block mb-1">Data Formats</strong>
-                                JSON, CSV, XML, SQL, YAML (.yaml, .yml)
-                            </div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-purple-400 block mb-1">Web Languages</strong>JavaScript (.js), HTML (.html), CSS (.css), PHP (.php)</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-blue-400 block mb-1">System & Application</strong>C++, C#, Java, Python (.py), Go, Rust (.rs), Ruby</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-green-400 block mb-1">Scripting & Markup</strong>Bash/Shell, PowerShell, Lua, Markdown (.md)</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-yellow-400 block mb-1">Data Formats</strong>JSON, CSV, XML, SQL, YAML (.yaml, .yml)</div>
                         </div>
                     </div>
 
-                    <!-- Rich Text Tab -->
                     <div id="tab-richtext" class="docs-tab-content hidden space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Rich Text Visual Document Editor</h2>
-                        <p>Switching the top mode dropdown to <strong>Rich Text (.rtf)</strong> unlocks a full WYSIWYG word processor panel:</p>
                         <ul class="list-disc pl-5 space-y-1 text-xs text-neutral-300">
                             <li><strong>Style Hierarchy:</strong> Normal Paragraphs, Title (H1), Subtitle (H2), Headings 1-3.</li>
-                            <li><strong>Typography:</strong> Bold, Italic, Underline, and pixel-precise Font Point Sizing.</li>
-                            <li><strong>Paragraph Formatting:</strong> Left, Center, Right Alignment, and Bulleted / Numbered lists.</li>
-                            <li><strong>Link Insertion:</strong> Highlight text and press the link icon to embed hyper-links.</li>
+                            <li><strong>Typography:</strong> Bold, Italic, Underline, and Font Point Sizing.</li>
+                            <li><strong>Formatting:</strong> Alignment and Lists.</li>
                         </ul>
                     </div>
 
-                    <!-- Search Tab -->
                     <div id="tab-search" class="docs-tab-content hidden space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Side-by-Side Search & Replace</h2>
-                        <p>Press <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Ctrl + F</kbd> (or <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Cmd + F</kbd>) or click the magnifying glass in the toolbar to open the side-by-side panel.</p>
-                        <div class="p-3 bg-neutral-900/60 rounded border border-neutral-700 space-y-2 text-xs">
-                            <p>• <strong>Find Next:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> inside Search input or click Next Arrow.</p>
-                            <p>• <strong>Find Previous:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Shift + Enter</kbd> or click Up Arrow.</p>
-                            <p>• <strong>Replace Current:</strong> Enter replacement text and click "Replace" or hit <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> in Replace input.</p>
-                            <p>• <strong>Replace All:</strong> Click "Replace All" to execute a global document replacement.</p>
-                        </div>
+                        <p>Press <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Ctrl + F</kbd> (or <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Cmd + F</kbd>) to open the side-by-side panel.</p>
                     </div>
-
                 </div>
             </div>
 
-            <!-- Modal Footer -->
             <div class="p-3 border-t border-neutral-700 bg-neutral-900/80 flex justify-between items-center text-xs text-neutral-400">
                 <span>Text&Code Edit+ v2.5</span>
-                <button onclick="closeDocsModal()" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition">
-                    Close Documentation
-                </button>
+                <button onclick="closeDocsModal()" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition">Close Documentation</button>
             </div>
         </div>
     </div>
@@ -508,7 +460,6 @@
         function refreshIcons() {
             if (window.lucide) lucide.createIcons();
         }
-        refreshIcons();
 
         function openDocsModal() {
             document.getElementById('docs-modal').classList.remove('hidden');
@@ -533,6 +484,31 @@
                 activeBtn.classList.remove('text-neutral-400');
             }
         }
+
+        const saveConfig = {
+            'text/javascript': { ext: '.js', mime: 'text/javascript' },
+            'text/html': { ext: '.html', mime: 'text/html' },
+            'text/css': { ext: '.css', mime: 'text/css' },
+            'application/x-httpd-php': { ext: '.php', mime: 'application/x-httpd-php' },
+            'text/x-c++src': { ext: '.cpp', mime: 'text/plain' },
+            'text/x-csharp': { ext: '.cs', mime: 'text/plain' },
+            'text/x-java': { ext: '.java', mime: 'text/plain' },
+            'text/x-python': { ext: '.py', mime: 'text/x-python' },
+            'text/x-go': { ext: '.go', mime: 'text/plain' },
+            'text/x-rustsrc': { ext: '.rs', mime: 'text/plain' },
+            'text/x-ruby': { ext: '.rb', mime: 'text/plain' },
+            'text/x-sh': { ext: '.sh', mime: 'application/x-sh' },
+            'application/x-powershell': { ext: '.ps1', mime: 'text/plain' },
+            'text/x-lua': { ext: '.lua', mime: 'text/plain' },
+            'text/x-markdown': { ext: '.md', mime: 'text/markdown' },
+            'application/xml': { ext: '.xml', mime: 'application/xml' },
+            'application/json': { ext: '.json', mime: 'application/json' },
+            'text/csv': { ext: '.csv', mime: 'text/csv' },
+            'text/x-sql': { ext: '.sql', mime: 'text/plain' },
+            'text/x-yaml': { ext: '.yaml', mime: 'text/x-yaml' },
+            'richtext': { ext: '.rtf', mime: 'text/html' },
+            'null': { ext: '.txt', mime: 'text/plain' }
+        };
 
         const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
             lineNumbers: true,
@@ -569,6 +545,646 @@ QUICK START GUIDE
 Start by typing below or use the "Folder" icon to open an existing file.`;
 
         editor.setValue(defaultWelcomeText);
+
+        const filenameInput = document.getElementById('filename-input');
+        const fileInput = document.getElementById('file-input');
+        const languageSelect = document.getElementById('language-select');
+        const themeSelect = document.getElementById('theme-select');
+        const saveBtn = document.getElementById('save-btn');
+        const previewBtn = document.getElementById('preview-btn');
+        const previewPane = document.getElementById('preview-pane');
+        const previewFrame = document.getElementById('preview-frame');
+        const cursorPosEl = document.getElementById('cursor-pos');
+        const docStatsEl = document.getElementById('doc-stats');
+        const modeDisplayEl = document.getElementById('mode-display');
+        const formatBtn = document.getElementById('format-btn');
+        const findBtn = document.getElementById('find-btn');
+        const autosaveStatus = document.getElementById('autosave-status');
+        
+        const cmWrapper = document.getElementById('cm-wrapper');
+        const richTextEditor = document.getElementById('rich-text-editor');
+        const richTextToolbar = document.getElementById('richtext-toolbar');
+        const editorContainer = document.getElementById('editor-container');
+        const linkModal = document.getElementById('link-modal');
+        const linkInput = document.getElementById('link-url-input');
+        const fontSizeSelect = document.getElementById('font-size-select');
+        const textStyleSelect = document.getElementById('text-style-select');
+        const cutBtn = document.getElementById('cut-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const pasteBtn = document.getElementById('paste-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        const searchBarPanel = document.getElementById('search-bar-panel');
+        const searchFindInput = document.getElementById('search-find-input');
+        const searchReplaceInput = document.getElementById('search-replace-input');
+        const searchNextBtn = document.getElementById('search-next-btn');
+        const searchPrevBtn = document.getElementById('search-prev-btn');
+        const searchReplaceBtn = document.getElementById('search-replace-btn');
+        const searchReplaceAllBtn = document.getElementById('search-replace-all-btn');
+        const searchCloseBtn = document.getElementById('search-close-btn');
+
+        let savedSelectionRange = null;
+        let isPreviewActive = false;
+
+        function toggleSearchBar(show = true) {
+            if (show) {
+                searchBarPanel.classList.remove('hidden');
+                searchFindInput.focus();
+                searchFindInput.select();
+                refreshIcons();
+            } else {
+                searchBarPanel.classList.add('hidden');
+                editor.focus();
+            }
+        }
+
+        function findMatches(reverse = false) {
+            const query = searchFindInput.value;
+            if (!query) return;
+
+            const cursor = editor.getSearchCursor(query, reverse ? editor.getCursor('from') : editor.getCursor('to'), { caseFold: true });
+            
+            if (reverse) {
+                if (cursor.findPrevious()) {
+                    editor.setSelection(cursor.from(), cursor.to());
+                    editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+                } else {
+                    const endCursor = editor.getSearchCursor(query, CodeMirror.Pos(editor.lastLine()), { caseFold: true });
+                    if (endCursor.findPrevious()) {
+                        editor.setSelection(endCursor.from(), endCursor.to());
+                        editor.scrollIntoView({ from: endCursor.from(), to: endCursor.to() }, 50);
+                    }
+                }
+            } else {
+                if (cursor.findNext()) {
+                    editor.setSelection(cursor.from(), cursor.to());
+                    editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+                } else {
+                    const startCursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
+                    if (startCursor.findNext()) {
+                        editor.setSelection(startCursor.from(), startCursor.to());
+                        editor.scrollIntoView({ from: startCursor.from(), to: startCursor.to() }, 50);
+                    }
+                }
+            }
+        }
+
+        function replaceCurrent() {
+            const query = searchFindInput.value;
+            const replacement = searchReplaceInput.value;
+            if (!query) return;
+
+            const selection = editor.getSelection();
+            if (selection.toLowerCase() === query.toLowerCase()) {
+                editor.replaceSelection(replacement);
+            }
+            findMatches(false);
+        }
+
+        function replaceAllMatches() {
+            const query = searchFindInput.value;
+            const replacement = searchReplaceInput.value;
+            if (!query) return;
+
+            const cursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
+            editor.operation(() => {
+                while (cursor.findNext()) {
+                    cursor.replace(replacement);
+                }
+            });
+        }
+
+        findBtn.addEventListener('click', () => toggleSearchBar(true));
+        searchCloseBtn.addEventListener('click', () => toggleSearchBar(false));
+        searchNextBtn.addEventListener('click', () => findMatches(false));
+        searchPrevBtn.addEventListener('click', () => findMatches(true));
+        searchReplaceBtn.addEventListener('click', replaceCurrent);
+        searchReplaceAllBtn.addEventListener('click', replaceAllMatches);
+
+        searchFindInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                findMatches(e.shiftKey);
+            } else if (e.key === 'Escape') {
+                toggleSearchBar(false);
+            }
+        });
+
+        searchReplaceInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                replaceCurrent();
+            } else if (e.key === 'Escape') {
+                toggleSearchBar(false);
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                toggleSearchBar(true);
+            }
+        });
+
+        let autosaveTimer = null;
+        function triggerAutoSave() {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(() => {
+                const sessionData = {
+                    filename: filenameInput.value,
+                    mode: languageSelect.value,
+                    theme: themeSelect.value,
+                    codeContent: editor.getValue(),
+                    richContent: richTextEditor.innerHTML
+                };
+                localStorage.setItem('textcode_edit_session', JSON.stringify(sessionData));
+                
+                autosaveStatus.classList.remove('hidden');
+                setTimeout(() => autosaveStatus.classList.add('hidden'), 1500);
+            }, 800);
+        }
+
+        function restoreSession() {
+            const saved = localStorage.getItem('textcode_edit_session');
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                if (data.filename) filenameInput.value = data.filename;
+                if (data.theme) {
+                    themeSelect.value = data.theme;
+                    applyTheme(data.theme);
+                }
+                if (data.codeContent && data.codeContent.trim() !== '') {
+                    editor.setValue(data.codeContent);
+                } else {
+                    editor.setValue(defaultWelcomeText);
+                }
+                if (data.richContent !== undefined) richTextEditor.innerHTML = data.richContent;
+                if (data.mode) {
+                    languageSelect.value = data.mode;
+                    handleModeSwitch(data.mode);
+                }
+            } catch (e) {
+                console.error("Failed to restore session:", e);
+            }
+        }
+
+        function applyTheme(theme) {
+            editor.setOption('theme', theme);
+            if (theme === 'material-darker') {
+                richTextEditor.classList.remove('bg-white', 'text-black');
+                richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                editorContainer.classList.remove('bg-white');
+                editorContainer.classList.add('bg-neutral-800');
+            } else {
+                richTextEditor.classList.remove('bg-neutral-800', 'text-neutral-200', 'dark-mode');
+                richTextEditor.classList.add('bg-white', 'text-black');
+                editorContainer.classList.remove('bg-neutral-800');
+                editorContainer.classList.add('bg-white');
+            }
+            triggerAutoSave();
+        }
+
+        undoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('undo');
+            } else {
+                editor.undo();
+                editor.focus();
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                document.execCommand('redo');
+            } else {
+                editor.redo();
+                editor.focus();
+            }
+        });
+
+        function focusActiveEditor() {
+            if (!richTextEditor.classList.contains('hidden')) {
+                richTextEditor.focus();
+                return 'rich';
+            } else {
+                editor.focus();
+                return 'code';
+            }
+        }
+
+        cutBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('cut');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            focusActiveEditor();
+            document.execCommand('copy');
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            const active = focusActiveEditor();
+            try {
+                const text = await navigator.clipboard.readText();
+                if (active === 'rich') {
+                    document.execCommand('insertText', false, text);
+                } else {
+                    editor.replaceSelection(text);
+                }
+            } catch (err) {
+                alert("Paste blocked by browser. Use Ctrl+V / Cmd+V.");
+            }
+        });
+
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            richTextEditor.focus();
+            updateRTFToolbarState();
+            triggerAutoSave();
+        }
+
+        textStyleSelect.addEventListener('change', (e) => {
+            const tag = e.target.value;
+            document.execCommand('formatBlock', false, tag);
+            richTextEditor.focus();
+            updateRTFToolbarState();
+            triggerAutoSave();
+        });
+
+        function changeFontSize(size) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (range.collapsed) return;
+
+                const span = document.createElement("span");
+                span.style.fontSize = size + "pt";
+                
+                try {
+                    const contents = range.extractContents();
+                    span.appendChild(contents);
+                    range.insertNode(span);
+                    selection.removeAllRanges();
+                } catch (e) {
+                    console.error("Font size error:", e);
+                }
+            }
+            richTextEditor.focus();
+            updateRTFToolbarState();
+            triggerAutoSave();
+        }
+
+        function highlightButton(id, isActive) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            if (isActive) {
+                btn.classList.add('bg-neutral-500', 'text-white');
+                btn.classList.remove('text-neutral-300', 'hover:bg-neutral-600');
+            } else {
+                btn.classList.remove('bg-neutral-500', 'text-white');
+                btn.classList.add('text-neutral-300', 'hover:bg-neutral-600');
+            }
+        }
+
+        function calculateWordCount(text) {
+            const trimmed = text.trim();
+            if (!trimmed) return 0;
+            return trimmed.split(/\s+/).length;
+        }
+
+        function updateRTFToolbarState() {
+             if (richTextEditor.classList.contains('hidden')) return;
+             
+             highlightButton('btn-bold', document.queryCommandState('bold'));
+             highlightButton('btn-italic', document.queryCommandState('italic'));
+             highlightButton('btn-underline', document.queryCommandState('underline'));
+             highlightButton('btn-align-left', document.queryCommandState('justifyLeft'));
+             highlightButton('btn-align-center', document.queryCommandState('justifyCenter'));
+             highlightButton('btn-align-right', document.queryCommandState('justifyRight'));
+             highlightButton('btn-list-ul', document.queryCommandState('insertUnorderedList'));
+             highlightButton('btn-list-ol', document.queryCommandState('insertOrderedList'));
+
+             const rtfText = richTextEditor.innerText || "";
+             const lineCount = rtfText ? rtfText.split('\n').length : 0;
+             const wordCount = calculateWordCount(rtfText);
+             docStatsEl.textContent = `${lineCount} Lines | ${wordCount} Words | ${rtfText.length} Chars`;
+        }
+
+        richTextEditor.addEventListener('mouseup', updateRTFToolbarState);
+        richTextEditor.addEventListener('keyup', () => {
+            updateRTFToolbarState();
+            triggerAutoSave();
+        });
+
+        fontSizeSelect.addEventListener('change', (e) => {
+            if (e.target.value) changeFontSize(e.target.value);
+        });
+
+        function openLinkModal() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (richTextEditor.contains(range.commonAncestorContainer)) {
+                    savedSelectionRange = range;
+                } else {
+                    savedSelectionRange = null;
+                }
+            } else {
+                savedSelectionRange = null;
+            }
+
+            if (!savedSelectionRange || savedSelectionRange.collapsed) {
+                alert("Please select text to link first.");
+                return;
+            }
+
+            linkModal.classList.remove('hidden');
+            refreshIcons();
+            linkInput.focus();
+        }
+
+        function closeLinkModal() {
+            linkModal.classList.add('hidden');
+            linkInput.value = '';
+        }
+
+        function insertLink() {
+            const url = linkInput.value;
+            closeLinkModal();
+
+            if (url && savedSelectionRange) {
+                richTextEditor.focus();
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedSelectionRange);
+                document.execCommand('createLink', false, url);
+                triggerAutoSave();
+            }
+        }
+
+        linkInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') insertLink();
+            if (e.key === 'Escape') closeLinkModal();
+        });
+
+        editor.on('cursorActivity', () => {
+            const pos = editor.getCursor();
+            cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+        });
+
+        editor.on('change', () => {
+            const text = editor.getValue();
+            const words = calculateWordCount(text);
+            docStatsEl.textContent = `${editor.lineCount()} Lines | ${words} Words | ${text.length} Chars`;
+            triggerAutoSave();
+            updateLivePreview();
+        });
+
+        filenameInput.addEventListener('input', triggerAutoSave);
+
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+
+        languageSelect.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            handleModeSwitch(mode);
+            triggerAutoSave();
+        });
+
+        formatBtn.addEventListener('click', () => {
+            if (!richTextEditor.classList.contains('hidden')) return;
+            const mode = languageSelect.value;
+            
+            if (mode === 'application/json') {
+                try {
+                    const parsed = JSON.parse(editor.getValue());
+                    editor.setValue(JSON.stringify(parsed, null, 4));
+                    return;
+                } catch (err) {
+                    alert('Invalid JSON: Cannot auto-format.');
+                    return;
+                }
+            }
+
+            const from = editor.getCursor('start');
+            const to = editor.getCursor('end');
+            
+            editor.operation(() => {
+                if (editor.somethingSelected()) {
+                    for (let i = from.line; i <= to.line; i++) {
+                        editor.indentLine(i, "smart");
+                    }
+                } else {
+                    const lineCount = editor.lineCount();
+                    for (let i = 0; i < lineCount; i++) {
+                        editor.indentLine(i, "smart");
+                    }
+                }
+            });
+            editor.focus();
+        });
+
+        function updateLivePreview() {
+            if (!isPreviewActive) return;
+
+            const mode = languageSelect.value;
+            const content = editor.getValue();
+
+            clearTimeout(window.previewTimeout);
+            window.previewTimeout = setTimeout(() => {
+                if (mode === 'text/html') {
+                    previewFrame.srcdoc = content;
+                } else if (mode === 'text/x-markdown' && window.marked) {
+                    const isDark = themeSelect.value === 'material-darker';
+                    const bg = isDark ? '#1f2937' : '#ffffff';
+                    const fg = isDark ? '#f3f4f6' : '#111827';
+                    const linkColor = isDark ? '#60a5fa' : '#2563eb';
+
+                    previewFrame.srcdoc = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: system-ui, sans-serif; padding: 24px; background-color: ${bg}; color: ${fg}; line-height: 1.6; }
+                                h1, h2, h3 { border-bottom: 1px solid rgba(156, 163, 175, 0.3); padding-bottom: 4px; }
+                                code { background: rgba(156, 163, 175, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+                                pre code { display: block; padding: 12px; overflow-x: auto; }
+                                a { color: ${linkColor}; }
+                            </style>
+                        </head>
+                        <body>${marked.parse(content)}</body>
+                        </html>
+                    `;
+                }
+            }, 300);
+        }
+
+        function handleModeSwitch(mode) {
+            const optionText = languageSelect.options[languageSelect.selectedIndex].text;
+            modeDisplayEl.textContent = optionText;
+
+            if (mode === 'richtext') {
+                const currentContent = editor.getValue();
+                if (/<[a-z][\s\S]*>/i.test(currentContent)) {
+                    richTextEditor.innerHTML = currentContent;
+                } else {
+                    richTextEditor.innerHTML = currentContent.replace(/\n/g, '<br>');
+                }
+
+                cmWrapper.classList.add('hidden');
+                richTextEditor.classList.remove('hidden');
+                richTextToolbar.classList.remove('hidden'); 
+                previewBtn.classList.add('hidden');
+                previewPane.classList.add('hidden');
+                formatBtn.classList.add('hidden');
+                cursorPosEl.textContent = `Rich Text Mode`;
+                updateRTFToolbarState();
+            } else {
+                if (!richTextEditor.classList.contains('hidden')) {
+                    if (mode === 'text/html') {
+                        editor.setValue(richTextEditor.innerHTML);
+                    } else {
+                        editor.setValue(richTextEditor.innerText);
+                    }
+                }
+
+                cmWrapper.classList.remove('hidden');
+                richTextEditor.classList.add('hidden');
+                richTextToolbar.classList.add('hidden');
+                formatBtn.classList.remove('hidden');
+
+                const cmMode = (mode === 'null' || mode === 'text/csv') ? null : mode;
+                editor.setOption('mode', cmMode);
+                editor.refresh(); 
+
+                if (mode === 'text/html' || mode === 'text/x-markdown') {
+                    previewBtn.classList.remove('hidden');
+                } else {
+                    previewBtn.classList.add('hidden');
+                    previewPane.classList.add('hidden');
+                    isPreviewActive = false;
+                }
+                
+                const pos = editor.getCursor();
+                cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+            }
+            refreshIcons();
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                filenameInput.value = file.name;
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                let mode = 'null';
+                
+                if (ext === 'yml' || ext === 'yaml') {
+                    mode = 'text/x-yaml';
+                } else {
+                    for (const [m, config] of Object.entries(saveConfig)) {
+                        if (config.ext === '.' + ext) {
+                            mode = m;
+                            break;
+                        }
+                    }
+                }
+                
+                let foundOption = false;
+                for (let i = 0; i < languageSelect.options.length; i++) {
+                    const opt = languageSelect.options[i];
+                    if (opt.value === mode) {
+                        languageSelect.selectedIndex = i;
+                        foundOption = true;
+                        break;
+                    }
+                }
+                if (!foundOption) {
+                    languageSelect.value = 'null';
+                    mode = 'null';
+                }
+
+                if (mode === 'richtext') {
+                    richTextEditor.innerHTML = content;
+                    handleModeSwitch('richtext');
+                } else {
+                    editor.setValue(content);
+                    handleModeSwitch(mode);
+                }
+                triggerAutoSave();
+            };
+            reader.readAsText(file);
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const mode = languageSelect.value;
+            const config = saveConfig[mode] || saveConfig['null'];
+            
+            let filename = filenameInput.value.trim() || 'untitled';
+            
+            const dotIndex = filename.lastIndexOf('.');
+            if (dotIndex !== -1) {
+                const existingExt = filename.substring(dotIndex);
+                const isSupportedExt = Object.values(saveConfig).some(c => c.ext === existingExt) || existingExt === '.yml';
+                if (isSupportedExt) {
+                    filename = filename.substring(0, dotIndex);
+                }
+            }
+            
+            filename = filename + config.ext;
+            filenameInput.value = filename;
+
+            let content = '';
+            if (mode === 'richtext') {
+                content = richTextEditor.innerHTML;
+            } else {
+                content = editor.getValue();
+            }
+
+            const blob = new Blob([content], { type: config.mime });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        previewBtn.addEventListener('click', () => {
+            isPreviewActive = !isPreviewActive;
+            if (isPreviewActive) {
+                previewPane.classList.remove('hidden');
+                editor.setSize(null, '100%'); 
+                updateLivePreview();
+            } else {
+                previewPane.classList.add('hidden');
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            const hasContent = editor.getValue().length > 0 || richTextEditor.innerText.trim().length > 0;
+            if (hasContent) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        refreshIcons();
+        applyTheme('material-darker'); 
+        handleModeSwitch('null');
+        restoreSession();
 
         window.addEventListener('resize', () => editor.refresh());
         setTimeout(() => editor.refresh(), 100);
