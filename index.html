@@ -82,7 +82,7 @@
             
             <!-- Left: Logo & File Controls -->
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg">
+                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg cursor-pointer" onclick="openDocsModal()">
                     <i data-lucide="code-2"></i>
                     <span>Text&Code Edit+</span>
                 </div>
@@ -181,8 +181,8 @@
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Load Guide / Reset Button -->
-                <button id="load-guide-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Restore Quick Start Guide">
+                <!-- Full Documentation Modal Button -->
+                <button id="help-modal-btn" onclick="openDocsModal()" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Open Full Documentation & Help">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -337,6 +337,147 @@
         </div>
     </footer>
 
+    <!-- Full Documentation Modal -->
+    <div id="docs-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-neutral-800 border border-neutral-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-neutral-700 flex items-center justify-between bg-neutral-900/50">
+                <div class="flex items-center gap-2 text-white font-bold text-lg">
+                    <i data-lucide="book-open" class="text-purple-400"></i>
+                    <span>Text&Code Edit+ — Full Documentation</span>
+                </div>
+                <button onclick="closeDocsModal()" class="p-1 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-md transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Sidebar Tabs -->
+                <div class="w-48 bg-neutral-900/40 border-r border-neutral-700 p-2 flex flex-col gap-1 text-sm font-medium">
+                    <button onclick="switchTab('tab-overview')" id="nav-tab-overview" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-purple-400 bg-neutral-700/60">
+                        <i data-lucide="compass" class="w-4 h-4"></i> Overview
+                    </button>
+                    <button onclick="switchTab('tab-features')" id="nav-tab-features" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Main Features
+                    </button>
+                    <button onclick="switchTab('tab-modes')" id="nav-tab-modes" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="code" class="w-4 h-4"></i> Code & Data
+                    </button>
+                    <button onclick="switchTab('tab-richtext')" id="nav-tab-richtext" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Rich Text (.rtf)
+                    </button>
+                    <button onclick="switchTab('tab-search')" id="nav-tab-search" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="search" class="w-4 h-4"></i> Search & Replace
+                    </button>
+                </div>
+
+                <!-- Documentation Content Area -->
+                <div class="flex-1 p-6 overflow-y-auto text-sm leading-relaxed text-neutral-300">
+                    
+                    <!-- Overview Tab -->
+                    <div id="tab-overview" class="docs-tab-content space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Welcome to Text&Code Edit+</h2>
+                        <p><strong>Text&Code Edit+</strong> is a high-performance web-based editor built for both document drafting and full-stack software development. It blends a robust visual rich-text canvas with a full-featured CodeMirror editor supporting over 20 programming and data languages.</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-700/60">
+                                <h3 class="font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-blue-400"></i> Smart Language Engine</h3>
+                                <p class="text-xs text-neutral-400">Automatic syntax highlighting and extension detection for JS, Python, Rust, Go, C++, SQL, YAML, and more.</p>
+                            </div>
+                            <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-700/60">
+                                <h3 class="font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="hard-drive" class="w-4 h-4 text-green-400"></i> Automatic Local Persistence</h3>
+                                <p class="text-xs text-neutral-400">Every keystroke is preserved in local browser storage to prevent accidental data loss.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features Tab -->
+                    <div id="tab-features" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Core Features & Shortcuts</h2>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="wand-2" class="w-5 h-5 text-yellow-400 mt-0.5"></i>
+                                <div>
+                                    <strong class="text-white">Magic Wand Code Formatter:</strong> Automatically cleans up indentation in code modes, or parses and pretty-prints minified JSON structures with a single click.
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="eye" class="w-5 h-5 text-blue-400 mt-0.5"></i>
+                                <div>
+                                    <strong class="text-white">Live Preview Pane:</strong> Real-time browser preview rendered for both HTML files and Markdown (.md) documents using <code class="bg-neutral-900 px-1 rounded">marked.js</code>.
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="save" class="w-5 h-5 text-green-400 mt-0.5"></i>
+                                <div>
+                                    <strong class="text-white">Intelligent File Saving:</strong> Automatically attaches the correct extension (e.g., <code class="bg-neutral-900 px-1 rounded">.py</code>, <code class="bg-neutral-900 px-1 rounded">.yaml</code>, <code class="bg-neutral-900 px-1 rounded">.rtf</code>) based on active language selection.
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Code Modes Tab -->
+                    <div id="tab-modes" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Supported Language Modes</h2>
+                        <p>Text&Code Edit+ provides full syntax highlighting, bracket matching, and auto-closing tags across these categories:</p>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
+                                <strong class="text-purple-400 block mb-1">Web Languages</strong>
+                                JavaScript (.js), HTML (.html), CSS (.css), PHP (.php)
+                            </div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
+                                <strong class="text-blue-400 block mb-1">System & Application</strong>
+                                C++, C#, Java, Python (.py), Go, Rust (.rs), Ruby
+                            </div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
+                                <strong class="text-green-400 block mb-1">Scripting & Markup</strong>
+                                Bash/Shell, PowerShell, Lua, Markdown (.md)
+                            </div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700">
+                                <strong class="text-yellow-400 block mb-1">Data Formats</strong>
+                                JSON, CSV, XML, SQL, YAML (.yaml, .yml)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rich Text Tab -->
+                    <div id="tab-richtext" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Rich Text Visual Document Editor</h2>
+                        <p>Switching the top mode dropdown to <strong>Rich Text (.rtf)</strong> unlocks a full WYSIWYG word processor panel:</p>
+                        <ul class="list-disc pl-5 space-y-1 text-xs text-neutral-300">
+                            <li><strong>Style Hierarchy:</strong> Normal Paragraphs, Title (H1), Subtitle (H2), Headings 1-3.</li>
+                            <li><strong>Typography:</strong> Bold, Italic, Underline, and pixel-precise Font Point Sizing.</li>
+                            <li><strong>Paragraph Formatting:</strong> Left, Center, Right Alignment, and Bulleted / Numbered lists.</li>
+                            <li><strong>Link Insertion:</strong> Highlight text and press the link icon to embed hyper-links.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Search Tab -->
+                    <div id="tab-search" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Side-by-Side Search & Replace</h2>
+                        <p>Press <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Ctrl + F</kbd> (or <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Cmd + F</kbd>) or click the magnifying glass in the toolbar to open the side-by-side panel.</p>
+                        <div class="p-3 bg-neutral-900/60 rounded border border-neutral-700 space-y-2 text-xs">
+                            <p>• <strong>Find Next:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> inside Search input or click Next Arrow.</p>
+                            <p>• <strong>Find Previous:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Shift + Enter</kbd> or click Up Arrow.</p>
+                            <p>• <strong>Replace Current:</strong> Enter replacement text and click "Replace" or hit <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> in Replace input.</p>
+                            <p>• <strong>Replace All:</strong> Click "Replace All" to execute a global document replacement.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-neutral-700 bg-neutral-900/80 flex justify-between items-center text-xs text-neutral-400">
+                <span>Text&Code Edit+ v2.5</span>
+                <button onclick="closeDocsModal()" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition">
+                    Close Documentation
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Link Modal -->
     <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-96">
@@ -350,51 +491,35 @@
     </div>
 
     <!-- Scripts -->
-    <!-- CodeMirror Core -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    
-    <!-- CodeMirror Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
-
-    <!-- CodeMirror Search API Addons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
-
-    <!-- CodeMirror Modes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/powershell/powershell.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
-    
-    <!-- CodeMirror Addons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
-
     <script>
-        function refreshIcons() {
-            if (window.lucide) {
-                lucide.createIcons();
+        // --- Documentation Modal Controls ---
+        function openDocsModal() {
+            document.getElementById('docs-modal').classList.remove('hidden');
+            refreshIcons();
+        }
+
+        function closeDocsModal() {
+            document.getElementById('docs-modal').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.docs-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.docs-tab-btn').forEach(btn => {
+                btn.classList.remove('text-purple-400', 'bg-neutral-700/60');
+                btn.classList.add('text-neutral-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('text-purple-400', 'bg-neutral-700/60');
+                activeBtn.classList.remove('text-neutral-400');
             }
         }
-        refreshIcons();
+    </script>
 
+    <script>
+        // --- Core App Initialization & Event Listeners ---
         const saveConfig = {
             'text/javascript': { ext: '.js', mime: 'text/javascript' },
             'text/html': { ext: '.html', mime: 'text/html' },
@@ -450,8 +575,9 @@ QUICK START GUIDE
    • Data Modes: Specialized handling for CSV, JSON, XML, and YAML.
 
 2. FEATURE HIGHLIGHTS
-   • Auto-Save: Automatically saves your progress locally so you never lose work.
    • Side-by-Side Find & Replace: Search and Replace boxes are placed right next to each other.
+   • Full Documentation: Click the "?" icon in the top bar anytime to open full documentation.
+   • Auto-Save: Automatically saves your progress locally so you never lose work.
    • Live Markdown & HTML Preview: Click the "Eye" button in Markdown or HTML modes.
    • Magic Wand: Formats and indents code or expands minified JSON cleanly.
 
@@ -472,7 +598,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         const modeDisplayEl = document.getElementById('mode-display');
         const formatBtn = document.getElementById('format-btn');
         const findBtn = document.getElementById('find-btn');
-        const loadGuideBtn = document.getElementById('load-guide-btn');
         const autosaveStatus = document.getElementById('autosave-status');
         
         const cmWrapper = document.getElementById('cm-wrapper');
@@ -502,7 +627,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         let savedSelectionRange = null;
         let isPreviewActive = false;
 
-        // --- Side-by-Side Find & Replace Logic ---
         function toggleSearchBar(show = true) {
             if (show) {
                 searchBarPanel.classList.remove('hidden');
@@ -526,7 +650,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     editor.setSelection(cursor.from(), cursor.to());
                     editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
                 } else {
-                    // Wrap around to bottom
                     const endCursor = editor.getSearchCursor(query, CodeMirror.Pos(editor.lastLine()), { caseFold: true });
                     if (endCursor.findPrevious()) {
                         editor.setSelection(endCursor.from(), endCursor.to());
@@ -538,7 +661,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     editor.setSelection(cursor.from(), cursor.to());
                     editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
                 } else {
-                    // Wrap around to top
                     const startCursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
                     if (startCursor.findNext()) {
                         editor.setSelection(startCursor.from(), startCursor.to());
@@ -598,7 +720,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         });
 
-        // Global Keyboard Shortcut for Search (Ctrl+F / Cmd+F)
         window.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
@@ -606,7 +727,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         });
 
-        // --- Auto-Save to localStorage ---
         let autosaveTimer = null;
         function triggerAutoSave() {
             clearTimeout(autosaveTimer);
@@ -651,16 +771,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                 console.error("Failed to restore session:", e);
             }
         }
-
-        loadGuideBtn.addEventListener('click', () => {
-            if (confirm("Reset current editor content and reload the Quick Start Guide?")) {
-                localStorage.removeItem('textcode_edit_session');
-                filenameInput.value = "untitled.txt";
-                languageSelect.value = "null";
-                handleModeSwitch("null");
-                editor.setValue(defaultWelcomeText);
-            }
-        });
 
         function applyTheme(theme) {
             editor.setOption('theme', theme);
