@@ -17,7 +17,6 @@
     <!-- CodeMirror Addons CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,32 +32,10 @@
             line-height: 1.5;
         }
 
-        /* CodeMirror Search Dialog Customization */
-        .CodeMirror-dialog {
-            background: #262626;
-            color: #e5e5e5;
-            border-bottom: 1px solid #404040;
-            padding: 6px 12px;
-            font-family: inherit;
-            font-size: 13px;
-        }
-        .CodeMirror-dialog input {
-            background: #404040;
-            color: #ffffff;
-            border: 1px solid #525252;
-            border-radius: 4px;
-            padding: 2px 6px;
-            outline: none;
-            margin: 0 4px;
-        }
-        .CodeMirror-dialog button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 4px;
-            cursor: pointer;
+        /* Highlight matching search terms in CodeMirror */
+        .cm-searching {
+            background-color: rgba(234, 179, 8, 0.4) !important;
+            border-bottom: 1px solid #eab308;
         }
         
         html, body {
@@ -203,6 +180,11 @@
                 <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code / Prettify JSON">
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
+
+                <!-- Load Guide / Reset Button -->
+                <button id="load-guide-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Restore Quick Start Guide">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                </button>
             </div>
 
             <!-- Right: Actions -->
@@ -282,6 +264,39 @@
         </div>
     </header>
 
+    <!-- Side-by-Side Search & Replace Panel -->
+    <div id="search-bar-panel" class="hidden bg-neutral-800 border-b border-neutral-700 px-4 py-2 flex items-center justify-between gap-3 text-sm z-20">
+        <div class="flex items-center gap-3 flex-1 flex-wrap">
+            <!-- Search Field -->
+            <div class="flex items-center gap-2 bg-neutral-900 border border-neutral-600 rounded px-2 py-1 flex-1 min-w-[200px]">
+                <i data-lucide="search" class="w-4 h-4 text-neutral-400"></i>
+                <input type="text" id="search-find-input" placeholder="Search for..." class="bg-transparent border-none outline-none text-white text-xs w-full">
+            </div>
+
+            <!-- Replace Field (Side-by-Side) -->
+            <div class="flex items-center gap-2 bg-neutral-900 border border-neutral-600 rounded px-2 py-1 flex-1 min-w-[200px]">
+                <i data-lucide="replace" class="w-4 h-4 text-neutral-400"></i>
+                <input type="text" id="search-replace-input" placeholder="Replace with..." class="bg-transparent border-none outline-none text-white text-xs w-full">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1">
+                <button id="search-prev-btn" class="p-1 hover:bg-neutral-700 text-neutral-300 rounded" title="Previous Match (Shift+Enter)">
+                    <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                </button>
+                <button id="search-next-btn" class="p-1 hover:bg-neutral-700 text-neutral-300 rounded" title="Next Match (Enter)">
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </button>
+                <button id="search-replace-btn" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium">Replace</button>
+                <button id="search-replace-all-btn" class="px-2 py-1 bg-neutral-700 hover:bg-neutral-600 text-white rounded text-xs">Replace All</button>
+            </div>
+        </div>
+
+        <button id="search-close-btn" class="p-1 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+
     <!-- Main Workspace -->
     <main class="flex-1 flex overflow-hidden relative">
         
@@ -341,10 +356,8 @@
     <!-- CodeMirror Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
 
-    <!-- CodeMirror Search Addons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+    <!-- CodeMirror Search API Addons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
 
     <!-- CodeMirror Modes -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
@@ -438,8 +451,8 @@ QUICK START GUIDE
 
 2. FEATURE HIGHLIGHTS
    • Auto-Save: Automatically saves your progress locally so you never lose work.
+   • Side-by-Side Find & Replace: Search and Replace boxes are placed right next to each other.
    • Live Markdown & HTML Preview: Click the "Eye" button in Markdown or HTML modes.
-   • Search & Replace: Press Ctrl+F (or Cmd+F) to open search in code editor.
    • Magic Wand: Formats and indents code or expands minified JSON cleanly.
 
 Start by typing below or use the "Folder" icon to open an existing file.`;
@@ -459,6 +472,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         const modeDisplayEl = document.getElementById('mode-display');
         const formatBtn = document.getElementById('format-btn');
         const findBtn = document.getElementById('find-btn');
+        const loadGuideBtn = document.getElementById('load-guide-btn');
         const autosaveStatus = document.getElementById('autosave-status');
         
         const cmWrapper = document.getElementById('cm-wrapper');
@@ -475,8 +489,122 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         const undoBtn = document.getElementById('undo-btn');
         const redoBtn = document.getElementById('redo-btn');
 
+        // Search Panel Elements
+        const searchBarPanel = document.getElementById('search-bar-panel');
+        const searchFindInput = document.getElementById('search-find-input');
+        const searchReplaceInput = document.getElementById('search-replace-input');
+        const searchNextBtn = document.getElementById('search-next-btn');
+        const searchPrevBtn = document.getElementById('search-prev-btn');
+        const searchReplaceBtn = document.getElementById('search-replace-btn');
+        const searchReplaceAllBtn = document.getElementById('search-replace-all-btn');
+        const searchCloseBtn = document.getElementById('search-close-btn');
+
         let savedSelectionRange = null;
         let isPreviewActive = false;
+
+        // --- Side-by-Side Find & Replace Logic ---
+        function toggleSearchBar(show = true) {
+            if (show) {
+                searchBarPanel.classList.remove('hidden');
+                searchFindInput.focus();
+                searchFindInput.select();
+                refreshIcons();
+            } else {
+                searchBarPanel.classList.add('hidden');
+                editor.focus();
+            }
+        }
+
+        function findMatches(reverse = false) {
+            const query = searchFindInput.value;
+            if (!query) return;
+
+            const cursor = editor.getSearchCursor(query, reverse ? editor.getCursor('from') : editor.getCursor('to'), { caseFold: true });
+            
+            if (reverse) {
+                if (cursor.findPrevious()) {
+                    editor.setSelection(cursor.from(), cursor.to());
+                    editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+                } else {
+                    // Wrap around to bottom
+                    const endCursor = editor.getSearchCursor(query, CodeMirror.Pos(editor.lastLine()), { caseFold: true });
+                    if (endCursor.findPrevious()) {
+                        editor.setSelection(endCursor.from(), endCursor.to());
+                        editor.scrollIntoView({ from: endCursor.from(), to: endCursor.to() }, 50);
+                    }
+                }
+            } else {
+                if (cursor.findNext()) {
+                    editor.setSelection(cursor.from(), cursor.to());
+                    editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+                } else {
+                    // Wrap around to top
+                    const startCursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
+                    if (startCursor.findNext()) {
+                        editor.setSelection(startCursor.from(), startCursor.to());
+                        editor.scrollIntoView({ from: startCursor.from(), to: startCursor.to() }, 50);
+                    }
+                }
+            }
+        }
+
+        function replaceCurrent() {
+            const query = searchFindInput.value;
+            const replacement = searchReplaceInput.value;
+            if (!query) return;
+
+            const selection = editor.getSelection();
+            if (selection.toLowerCase() === query.toLowerCase()) {
+                editor.replaceSelection(replacement);
+            }
+            findMatches(false);
+        }
+
+        function replaceAllMatches() {
+            const query = searchFindInput.value;
+            const replacement = searchReplaceInput.value;
+            if (!query) return;
+
+            const cursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
+            editor.operation(() => {
+                while (cursor.findNext()) {
+                    cursor.replace(replacement);
+                }
+            });
+        }
+
+        findBtn.addEventListener('click', () => toggleSearchBar(true));
+        searchCloseBtn.addEventListener('click', () => toggleSearchBar(false));
+        searchNextBtn.addEventListener('click', () => findMatches(false));
+        searchPrevBtn.addEventListener('click', () => findMatches(true));
+        searchReplaceBtn.addEventListener('click', replaceCurrent);
+        searchReplaceAllBtn.addEventListener('click', replaceAllMatches);
+
+        searchFindInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                findMatches(e.shiftKey);
+            } else if (e.key === 'Escape') {
+                toggleSearchBar(false);
+            }
+        });
+
+        searchReplaceInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                replaceCurrent();
+            } else if (e.key === 'Escape') {
+                toggleSearchBar(false);
+            }
+        });
+
+        // Global Keyboard Shortcut for Search (Ctrl+F / Cmd+F)
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                toggleSearchBar(true);
+            }
+        });
 
         // --- Auto-Save to localStorage ---
         let autosaveTimer = null;
@@ -523,6 +651,16 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                 console.error("Failed to restore session:", e);
             }
         }
+
+        loadGuideBtn.addEventListener('click', () => {
+            if (confirm("Reset current editor content and reload the Quick Start Guide?")) {
+                localStorage.removeItem('textcode_edit_session');
+                filenameInput.value = "untitled.txt";
+                languageSelect.value = "null";
+                handleModeSwitch("null");
+                editor.setValue(defaultWelcomeText);
+            }
+        });
 
         function applyTheme(theme) {
             editor.setOption('theme', theme);
@@ -592,14 +730,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                 }
             } catch (err) {
                 alert("Paste was blocked by your browser. Please use the keyboard shortcut (Ctrl+V / Cmd+V).");
-            }
-        });
-
-        findBtn.addEventListener('click', () => {
-            if (richTextEditor.classList.contains('hidden')) {
-                editor.execCommand('find');
-            } else {
-                alert("Search functionality is active in Code and Plain Text modes. Switch modes via the top dropdown.");
             }
         });
 
