@@ -14,12 +14,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
     
-    <!-- CodeMirror Addons -->
+    <!-- CodeMirror Addons CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Marked JS for Markdown Preview -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         .CodeMirror {
@@ -27,6 +31,34 @@
             font-family: 'Fira Code', 'Consolas', monospace;
             font-size: 14px;
             line-height: 1.5;
+        }
+
+        /* CodeMirror Search Dialog Customization */
+        .CodeMirror-dialog {
+            background: #262626;
+            color: #e5e5e5;
+            border-bottom: 1px solid #404040;
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        .CodeMirror-dialog input {
+            background: #404040;
+            color: #ffffff;
+            border: 1px solid #525252;
+            border-radius: 4px;
+            padding: 2px 6px;
+            outline: none;
+            margin: 0 4px;
+        }
+        .CodeMirror-dialog button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+            cursor: pointer;
         }
         
         html, body {
@@ -116,6 +148,13 @@
                 <button id="paste-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Paste">
                     <i data-lucide="clipboard" class="w-5 h-5 text-neutral-400"></i>
                 </button>
+                
+                <div class="h-6 w-px bg-neutral-600 mx-1"></div>
+
+                <!-- Search Button -->
+                <button id="find-btn" class="p-2 hover:bg-neutral-700 rounded-md transition tooltip" title="Find & Replace (Ctrl+F)">
+                    <i data-lucide="search" class="w-5 h-5 text-neutral-400"></i>
+                </button>
             </div>
 
             <!-- Center: Language & Settings -->
@@ -144,7 +183,7 @@
                         <option value="text/x-sh">Shell / Bash</option>
                         <option value="application/x-powershell">PowerShell</option>
                         <option value="text/x-lua">Lua</option>
-                        <option value="text/x-markdown">Markdown</option>
+                        <option value="text/x-markdown">Markdown (.md)</option>
                     </optgroup>
                     <optgroup label="Data">
                         <option value="application/json">JSON</option>
@@ -161,7 +200,7 @@
                 </select>
 
                 <!-- Format Button -->
-                <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code">
+                <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code / Prettify JSON">
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -257,18 +296,19 @@
             <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
         </div>
 
-        <!-- Preview Pane (Hidden by default, used for HTML) -->
+        <!-- Preview Pane (Used for HTML & Markdown) -->
         <div id="preview-pane" class="hidden flex-1 border-l border-neutral-700 bg-white relative">
-            <div class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Browser Preview</div>
+            <div id="preview-tag" class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Live Preview</div>
             <iframe id="preview-frame" class="w-full h-full border-none"></iframe>
         </div>
     </main>
 
     <!-- Footer / Status Bar -->
     <footer class="bg-neutral-800 border-t border-neutral-700 text-xs text-neutral-400 p-1 px-4 flex justify-between items-center select-none">
-        <div class="flex gap-4">
+        <div class="flex gap-4 items-center">
             <span id="cursor-pos">Ln 1, Col 1</span>
-            <span id="doc-stats">0 Lines, 0 Chars</span>
+            <span id="doc-stats">0 Lines | 0 Words | 0 Chars</span>
+            <span id="autosave-status" class="text-green-400 text-[10px] hidden">Saved</span>
         </div>
         
         <div class="text-neutral-500 opacity-75">
@@ -301,6 +341,11 @@
     <!-- CodeMirror Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
 
+    <!-- CodeMirror Search Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+
     <!-- CodeMirror Modes -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
@@ -330,7 +375,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
 
     <script>
-        lucide.createIcons();
+        function refreshIcons() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+        refreshIcons();
 
         const saveConfig = {
             'text/javascript': { ext: '.js', mime: 'text/javascript' },
@@ -372,7 +422,7 @@
             tabSize: 4
         });
 
-        editor.setValue(`Welcome to Text&Code Edit+!
+        const defaultWelcomeText = `Welcome to Text&Code Edit+!
 
 Text&Code Edit+ is a versatile editor for both coding and document creation.
 
@@ -383,27 +433,18 @@ QUICK START GUIDE
 1. SELECTING A MODE (Top Dropdown)
    • Plain Text: For standard notes and logs.
    • Rich Text (.rtf): Full document editing with Titles, Headings, Fonts, Lists, and Links.
-   • Code Modes: Supports 20+ languages (JS, C++, Java, Python, Rust, SQL, etc.) with syntax highlighting.
+   • Code Modes: Supports 20+ languages (JS, Python, Rust, SQL, YAML, Markdown, etc.).
    • Data Modes: Specialized handling for CSV, JSON, XML, and YAML.
 
-2. TOOLBAR CONTROLS
-   • Undo/Redo: Easily step back or forward through your changes in any mode.
-   • Clipboard: Dedicated Cut, Copy, and Paste buttons for quick editing.
-   • Formatting (RTF): Bold, Italic, Underline, Alignment, Lists, and Font Sizing.
+2. FEATURE HIGHLIGHTS
+   • Auto-Save: Automatically saves your progress locally so you never lose work.
+   • Live Markdown & HTML Preview: Click the "Eye" button in Markdown or HTML modes.
+   • Search & Replace: Press Ctrl+F (or Cmd+F) to open search in code editor.
+   • Magic Wand: Formats and indents code or expands minified JSON cleanly.
 
-3. INTELLIGENT SAVING
-   • The editor automatically detects your file type.
-   • "Python" mode saves as ".py", "Rich Text" as ".rtf", "CSV" as ".csv", etc.
+Start by typing below or use the "Folder" icon to open an existing file.`;
 
-4. CODING TOOLS
-   • Magic Wand: Formats and indents your code instantly.
-   • HTML Preview: Click the "Eye" icon to see your code rendered live.
-   • Auto-Complete: Brackets () and Tags <div> close automatically.
-
-5. THEMES
-   • Toggle between Dark (Material) and Light (Eclipse) themes via the dropdown.
-
-Start by typing below or use the "Folder" icon to open an existing file.`);
+        editor.setValue(defaultWelcomeText);
 
         const filenameInput = document.getElementById('filename-input');
         const fileInput = document.getElementById('file-input');
@@ -417,6 +458,8 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         const docStatsEl = document.getElementById('doc-stats');
         const modeDisplayEl = document.getElementById('mode-display');
         const formatBtn = document.getElementById('format-btn');
+        const findBtn = document.getElementById('find-btn');
+        const autosaveStatus = document.getElementById('autosave-status');
         
         const cmWrapper = document.getElementById('cm-wrapper');
         const richTextEditor = document.getElementById('rich-text-editor');
@@ -433,6 +476,47 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         const redoBtn = document.getElementById('redo-btn');
 
         let savedSelectionRange = null;
+        let isPreviewActive = false;
+
+        // --- Auto-Save to localStorage ---
+        let autosaveTimer = null;
+        function triggerAutoSave() {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(() => {
+                const sessionData = {
+                    filename: filenameInput.value,
+                    mode: languageSelect.value,
+                    theme: themeSelect.value,
+                    codeContent: editor.getValue(),
+                    richContent: richTextEditor.innerHTML
+                };
+                localStorage.setItem('textcode_edit_session', JSON.stringify(sessionData));
+                
+                autosaveStatus.classList.remove('hidden');
+                setTimeout(() => autosaveStatus.classList.add('hidden'), 1500);
+            }, 800);
+        }
+
+        function restoreSession() {
+            const saved = localStorage.getItem('textcode_edit_session');
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                if (data.filename) filenameInput.value = data.filename;
+                if (data.theme) {
+                    themeSelect.value = data.theme;
+                    applyTheme(data.theme);
+                }
+                if (data.codeContent !== undefined) editor.setValue(data.codeContent);
+                if (data.richContent !== undefined) richTextEditor.innerHTML = data.richContent;
+                if (data.mode) {
+                    languageSelect.value = data.mode;
+                    handleModeSwitch(data.mode);
+                }
+            } catch (e) {
+                console.error("Failed to restore session:", e);
+            }
+        }
 
         function applyTheme(theme) {
             editor.setOption('theme', theme);
@@ -448,6 +532,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 editorContainer.classList.remove('bg-neutral-800');
                 editorContainer.classList.add('bg-white');
             }
+            triggerAutoSave();
         }
 
         undoBtn.addEventListener('click', () => {
@@ -504,10 +589,19 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             }
         });
 
+        findBtn.addEventListener('click', () => {
+            if (richTextEditor.classList.contains('hidden')) {
+                editor.execCommand('find');
+            } else {
+                alert("Search functionality is active in Code and Plain Text modes. Switch modes via the top dropdown.");
+            }
+        });
+
         function formatDoc(cmd, value = null) {
             document.execCommand(cmd, false, value);
             richTextEditor.focus();
             updateRTFToolbarState();
+            triggerAutoSave();
         }
 
         textStyleSelect.addEventListener('change', (e) => {
@@ -515,6 +609,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             document.execCommand('formatBlock', false, tag);
             richTextEditor.focus();
             updateRTFToolbarState();
+            triggerAutoSave();
         });
 
         function changeFontSize(size) {
@@ -537,6 +632,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             }
             richTextEditor.focus();
             updateRTFToolbarState();
+            triggerAutoSave();
         }
 
         function highlightButton(id, isActive) {
@@ -550,6 +646,12 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 btn.classList.remove('bg-neutral-500', 'text-white');
                 btn.classList.add('text-neutral-300', 'hover:bg-neutral-600');
             }
+        }
+
+        function calculateWordCount(text) {
+            const trimmed = text.trim();
+            if (!trimmed) return 0;
+            return trimmed.split(/\s+/).length;
         }
 
         function updateRTFToolbarState() {
@@ -581,34 +683,41 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                  }
              }
 
-             if (selection.rangeCount === 0) return;
-             
-             let node = selection.anchorNode;
-             if (!richTextEditor.contains(node) && node !== richTextEditor) return;
-             
-             if (node.nodeType === 3) node = node.parentNode;
-             
-             const computedStyle = window.getComputedStyle(node);
-             const fontSizePx = parseFloat(computedStyle.fontSize);
-             const fontSizePt = Math.round(fontSizePx * 0.75);
-             
-             let found = false;
-             for(let i=0; i<fontSizeSelect.options.length; i++) {
-                 if (fontSizeSelect.options[i].value == fontSizePt) {
-                     fontSizeSelect.selectedIndex = i;
-                     found = true;
-                     break;
+             if (selection.rangeCount > 0) {
+                 let node = selection.anchorNode;
+                 if (richTextEditor.contains(node) || node === richTextEditor) {
+                     if (node.nodeType === 3) node = node.parentNode;
+                     
+                     const computedStyle = window.getComputedStyle(node);
+                     const fontSizePx = parseFloat(computedStyle.fontSize);
+                     const fontSizePt = Math.round(fontSizePx * 0.75);
+                     
+                     let found = false;
+                     for(let i=0; i<fontSizeSelect.options.length; i++) {
+                         if (fontSizeSelect.options[i].value == fontSizePt) {
+                             fontSizeSelect.selectedIndex = i;
+                             found = true;
+                             break;
+                         }
+                     }
+                     if (!found) fontSizeSelect.value = "";
                  }
              }
-             if (!found) fontSizeSelect.value = "";
 
              const rtfText = richTextEditor.innerText || "";
              const lineCount = rtfText ? rtfText.split('\n').length : 0;
-             docStatsEl.textContent = `${lineCount} Lines, ${rtfText.length} Chars`;
+             const wordCount = calculateWordCount(rtfText);
+             docStatsEl.textContent = `${lineCount} Lines | ${wordCount} Words | ${rtfText.length} Chars`;
         }
 
         richTextEditor.addEventListener('mouseup', updateRTFToolbarState);
-        richTextEditor.addEventListener('keyup', updateRTFToolbarState);
+        richTextEditor.addEventListener('keyup', () => {
+            updateRTFToolbarState();
+            triggerAutoSave();
+        });
+        richTextEditor.addEventListener('keydown', () => {
+            setTimeout(updateRTFToolbarState, 10);
+        });
 
         fontSizeSelect.addEventListener('change', (e) => {
             if (e.target.value) {
@@ -635,6 +744,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             }
 
             linkModal.classList.remove('hidden');
+            refreshIcons();
             linkInput.focus();
         }
 
@@ -653,6 +763,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 selection.removeAllRanges();
                 selection.addRange(savedSelectionRange);
                 document.execCommand('createLink', false, url);
+                triggerAutoSave();
             }
         }
 
@@ -668,8 +779,13 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
 
         editor.on('change', () => {
             const text = editor.getValue();
-            docStatsEl.textContent = `${editor.lineCount()} Lines, ${text.length} Chars`;
+            const words = calculateWordCount(text);
+            docStatsEl.textContent = `${editor.lineCount()} Lines | ${words} Words | ${text.length} Chars`;
+            triggerAutoSave();
+            updateLivePreview();
         });
+
+        filenameInput.addEventListener('input', triggerAutoSave);
 
         themeSelect.addEventListener('change', (e) => {
             applyTheme(e.target.value);
@@ -678,16 +794,84 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
         languageSelect.addEventListener('change', (e) => {
             const mode = e.target.value;
             handleModeSwitch(mode);
+            triggerAutoSave();
         });
 
         formatBtn.addEventListener('click', () => {
             if (!richTextEditor.classList.contains('hidden')) return;
-            const lineCount = editor.lineCount();
-            for (let i = 0; i < lineCount; i++) {
-                editor.indentLine(i, "smart");
+            
+            const mode = languageSelect.value;
+            
+            if (mode === 'application/json') {
+                try {
+                    const parsed = JSON.parse(editor.getValue());
+                    editor.setValue(JSON.stringify(parsed, null, 4));
+                    return;
+                } catch (err) {
+                    alert('Invalid JSON: Cannot auto-format.');
+                    return;
+                }
             }
+
+            const from = editor.getCursor('start');
+            const to = editor.getCursor('end');
+            
+            editor.operation(() => {
+                if (editor.somethingSelected()) {
+                    for (let i = from.line; i <= to.line; i++) {
+                        editor.indentLine(i, "smart");
+                    }
+                } else {
+                    const lineCount = editor.lineCount();
+                    for (let i = 0; i < lineCount; i++) {
+                        editor.indentLine(i, "smart");
+                    }
+                }
+            });
             editor.focus();
         });
+
+        function updateLivePreview() {
+            if (!isPreviewActive) return;
+
+            const mode = languageSelect.value;
+            const content = editor.getValue();
+
+            clearTimeout(window.previewTimeout);
+            window.previewTimeout = setTimeout(() => {
+                if (mode === 'text/html') {
+                    previewFrame.srcdoc = content;
+                } else if (mode === 'text/x-markdown' && window.marked) {
+                    const isDark = themeSelect.value === 'material-darker';
+                    const bg = isDark ? '#1f2937' : '#ffffff';
+                    const fg = isDark ? '#f3f4f6' : '#111827';
+                    const linkColor = isDark ? '#60a5fa' : '#2563eb';
+
+                    previewFrame.srcdoc = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <style>
+                                body {
+                                    font-family: system-ui, -apple-system, sans-serif;
+                                    padding: 24px;
+                                    background-color: ${bg};
+                                    color: ${fg};
+                                    line-height: 1.6;
+                                }
+                                h1, h2, h3 { border-bottom: 1px solid rgba(156, 163, 175, 0.3); padding-bottom: 4px; }
+                                code { background: rgba(156, 163, 175, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+                                pre code { display: block; padding: 12px; overflow-x: auto; }
+                                a { color: ${linkColor}; }
+                                blockquote { border-left: 4px solid #3b82f6; padding-left: 12px; margin-left: 0; opacity: 0.85; }
+                            </style>
+                        </head>
+                        <body>${marked.parse(content)}</body>
+                        </html>
+                    `;
+                }
+            }, 300);
+        }
 
         function handleModeSwitch(mode) {
             const optionText = languageSelect.options[languageSelect.selectedIndex].text;
@@ -728,16 +912,19 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 editor.setOption('mode', cmMode);
                 editor.refresh(); 
 
-                if (mode === 'text/html') {
+                // Support preview for both HTML and Markdown
+                if (mode === 'text/html' || mode === 'text/x-markdown') {
                     previewBtn.classList.remove('hidden');
                 } else {
                     previewBtn.classList.add('hidden');
                     previewPane.classList.add('hidden');
+                    isPreviewActive = false;
                 }
                 
                 const pos = editor.getCursor();
                 cursorPosEl.textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
             }
+            refreshIcons();
         }
 
         fileInput.addEventListener('change', (e) => {
@@ -752,7 +939,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                 const ext = file.name.split('.').pop().toLowerCase();
                 let mode = 'null';
                 
-                // Extension lookup matching (includes support for .yml and .yaml)
                 if (ext === 'yml' || ext === 'yaml') {
                     mode = 'text/x-yaml';
                 } else {
@@ -785,6 +971,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
                     editor.setValue(content);
                     handleModeSwitch(mode);
                 }
+                triggerAutoSave();
             };
             reader.readAsText(file);
         });
@@ -826,29 +1013,28 @@ Start by typing below or use the "Folder" icon to open an existing file.`);
             URL.revokeObjectURL(url);
         });
 
-        let isPreviewActive = false;
         previewBtn.addEventListener('click', () => {
             isPreviewActive = !isPreviewActive;
             if (isPreviewActive) {
                 previewPane.classList.remove('hidden');
                 editor.setSize(null, '100%'); 
-                previewFrame.srcdoc = editor.getValue();
+                updateLivePreview();
             } else {
                 previewPane.classList.add('hidden');
             }
         });
-        
-        editor.on('change', () => {
-            if (isPreviewActive && languageSelect.value === 'text/html') {
-                clearTimeout(window.previewTimeout);
-                window.previewTimeout = setTimeout(() => {
-                    previewFrame.srcdoc = editor.getValue();
-                }, 500);
+
+        window.addEventListener('beforeunload', (e) => {
+            const hasContent = editor.getValue().length > 0 || richTextEditor.innerText.trim().length > 0;
+            if (hasContent) {
+                e.preventDefault();
+                e.returnValue = '';
             }
         });
 
         applyTheme('material-darker'); 
         handleModeSwitch('null');
+        restoreSession();
 
     </script>
 </body>
