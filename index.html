@@ -507,7 +507,13 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     themeSelect.value = data.theme;
                     applyTheme(data.theme);
                 }
-                if (data.codeContent !== undefined) editor.setValue(data.codeContent);
+                
+                if (data.codeContent && data.codeContent.trim() !== '') {
+                    editor.setValue(data.codeContent);
+                } else {
+                    editor.setValue(defaultWelcomeText);
+                }
+                
                 if (data.richContent !== undefined) richTextEditor.innerHTML = data.richContent;
                 if (data.mode) {
                     languageSelect.value = data.mode;
@@ -912,7 +918,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                 editor.setOption('mode', cmMode);
                 editor.refresh(); 
 
-                // Support preview for both HTML and Markdown
                 if (mode === 'text/html' || mode === 'text/x-markdown') {
                     previewBtn.classList.remove('hidden');
                 } else {
