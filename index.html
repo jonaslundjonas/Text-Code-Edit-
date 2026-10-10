@@ -16,7 +16,6 @@
     
     <!-- CodeMirror Addons CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -80,6 +79,7 @@
 
     <!-- Navbar / Toolbar -->
     <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col shrink-0">
+        <!-- Top Row: File Controls -->
         <div class="flex items-center justify-between p-2 px-4 flex-wrap gap-2">
             
             <!-- Left: Logo & File Controls -->
@@ -178,10 +178,12 @@
                     <option value="eclipse">Light (Eclipse)</option>
                 </select>
 
+                <!-- Format Button -->
                 <button id="format-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-white" title="Format Code / Prettify JSON">
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
 
+                <!-- Documentation Popup Button -->
                 <button id="help-modal-btn" onclick="openDocsModal()" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Open Full Documentation & Help">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                 </button>
@@ -195,7 +197,7 @@
             </div>
         </div>
 
-        <!-- Rich Text Toolbar -->
+        <!-- Rich Text Toolbar (Hidden by default) -->
         <div id="richtext-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-1 flex-wrap">
             <div class="flex items-center gap-2 mr-2">
                 <select id="text-style-select" class="bg-neutral-600 text-white text-sm rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-32">
@@ -322,7 +324,7 @@
         </div>
     </footer>
 
-    <!-- Full Documentation Modal -->
+    <!-- Full Documentation Modal Popup -->
     <div id="docs-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-neutral-800 border border-neutral-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
             <div class="p-4 border-b border-neutral-700 flex items-center justify-between bg-neutral-900/50">
@@ -403,13 +405,19 @@
                         <ul class="list-disc pl-5 space-y-1 text-xs text-neutral-300">
                             <li><strong>Style Hierarchy:</strong> Normal Paragraphs, Title (H1), Subtitle (H2), Headings 1-3.</li>
                             <li><strong>Typography:</strong> Bold, Italic, Underline, and Font Point Sizing.</li>
-                            <li><strong>Formatting:</strong> Alignment and Lists.</li>
+                            <li><strong>Formatting:</strong> Alignment and Bulleted / Numbered lists.</li>
                         </ul>
                     </div>
 
                     <div id="tab-search" class="docs-tab-content hidden space-y-4">
                         <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Side-by-Side Search & Replace</h2>
                         <p>Press <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Ctrl + F</kbd> (or <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Cmd + F</kbd>) to open the side-by-side panel.</p>
+                        <div class="p-3 bg-neutral-900/60 rounded border border-neutral-700 space-y-2 text-xs">
+                            <p>• <strong>Find Next:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> inside Search input or click Next Arrow.</p>
+                            <p>• <strong>Find Previous:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Shift + Enter</kbd> or click Up Arrow.</p>
+                            <p>• <strong>Replace Current:</strong> Click "Replace" or hit <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> in Replace input.</p>
+                            <p>• <strong>Replace All:</strong> Click "Replace All" to execute global document replacement.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -422,7 +430,7 @@
     </div>
 
     <!-- Link Modal -->
-    <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div id="link-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-96">
             <h3 class="text-white text-lg font-bold mb-4">Insert Link</h3>
             <input type="text" id="link-url-input" class="w-full bg-neutral-700 text-white border border-neutral-600 rounded px-3 py-2 mb-4 focus:outline-none focus:border-blue-500" placeholder="https://example.com">
