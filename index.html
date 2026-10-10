@@ -25,8 +25,16 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        .CodeMirror {
+        html, body {
             height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #editor-container, #cm-wrapper, .CodeMirror {
+            height: 100% !important;
+            width: 100% !important;
             font-family: 'Fira Code', 'Consolas', monospace;
             font-size: 14px;
             line-height: 1.5;
@@ -36,11 +44,6 @@
         .cm-searching {
             background-color: rgba(234, 179, 8, 0.4) !important;
             border-bottom: 1px solid #eab308;
-        }
-        
-        html, body {
-            height: 100%;
-            overflow: hidden;
         }
 
         #rich-text-editor {
@@ -73,16 +76,16 @@
         }
     </style>
 </head>
-<body class="bg-neutral-900 text-neutral-200 flex flex-col h-screen relative">
+<body class="bg-neutral-900 text-neutral-200 flex flex-col h-screen overflow-hidden">
 
     <!-- Navbar / Toolbar -->
-    <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col">
+    <header class="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 flex flex-col shrink-0">
         <!-- Top Row: File Controls -->
         <div class="flex items-center justify-between p-2 px-4 flex-wrap gap-2">
             
             <!-- Left: Logo & File Controls -->
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg">
+                <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg cursor-pointer" onclick="openDocsModal()">
                     <i data-lucide="code-2"></i>
                     <span>Text&Code Edit+</span>
                 </div>
@@ -181,8 +184,8 @@
                     <i data-lucide="wand-2" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Load Guide / Reset Button -->
-                <button id="load-guide-btn" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Restore Quick Start Guide">
+                <!-- Documentation Popup Button -->
+                <button id="help-modal-btn" onclick="openDocsModal()" class="p-1 hover:bg-neutral-700 rounded-md transition tooltip text-neutral-400 hover:text-purple-400" title="Open Full Documentation & Help">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -195,10 +198,8 @@
             </div>
         </div>
 
-        <!-- Bottom Row: Rich Text Toolbar (Hidden by default) -->
+        <!-- Rich Text Toolbar (Hidden by default) -->
         <div id="richtext-toolbar" class="hidden border-t border-neutral-700 bg-neutral-700 p-1 px-4 flex items-center gap-1 flex-wrap">
-            
-            <!-- Text Style / Headings Dropdown -->
             <div class="flex items-center gap-2 mr-2">
                 <select id="text-style-select" class="bg-neutral-600 text-white text-sm rounded px-2 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500 w-32">
                     <option value="P">Normal Text</option>
@@ -212,32 +213,27 @@
 
             <div class="h-4 w-px bg-neutral-500 mx-2"></div>
 
-            <!-- Text Style -->
             <button id="btn-bold" onmousedown="event.preventDefault();" onclick="formatDoc('bold')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bold"><i data-lucide="bold" class="w-4 h-4"></i></button>
             <button id="btn-italic" onmousedown="event.preventDefault();" onclick="formatDoc('italic')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Italic"><i data-lucide="italic" class="w-4 h-4"></i></button>
             <button id="btn-underline" onmousedown="event.preventDefault();" onclick="formatDoc('underline')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Underline"><i data-lucide="underline" class="w-4 h-4"></i></button>
             
             <div class="h-4 w-px bg-neutral-500 mx-2"></div>
             
-            <!-- Alignment -->
             <button id="btn-align-left" onmousedown="event.preventDefault();" onclick="formatDoc('justifyLeft')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Left"><i data-lucide="align-left" class="w-4 h-4"></i></button>
             <button id="btn-align-center" onmousedown="event.preventDefault();" onclick="formatDoc('justifyCenter')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Center"><i data-lucide="align-center" class="w-4 h-4"></i></button>
             <button id="btn-align-right" onmousedown="event.preventDefault();" onclick="formatDoc('justifyRight')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Align Right"><i data-lucide="align-right" class="w-4 h-4"></i></button>
             
             <div class="h-4 w-px bg-neutral-500 mx-2"></div>
             
-            <!-- Lists -->
             <button id="btn-list-ul" onmousedown="event.preventDefault();" onclick="formatDoc('insertUnorderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Bullet List"><i data-lucide="list" class="w-4 h-4"></i></button>
             <button id="btn-list-ol" onmousedown="event.preventDefault();" onclick="formatDoc('insertOrderedList')" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Numbered List"><i data-lucide="list-ordered" class="w-4 h-4"></i></button>
             
             <div class="h-4 w-px bg-neutral-500 mx-2"></div>
             
-            <!-- Link -->
             <button onmousedown="event.preventDefault();" onclick="openLinkModal()" class="p-1 hover:bg-neutral-600 rounded text-neutral-300" title="Link"><i data-lucide="link" class="w-4 h-4"></i></button>
             
             <div class="h-4 w-px bg-neutral-500 mx-2"></div>
             
-            <!-- Font Size Dropdown -->
             <div class="flex items-center gap-2">
                 <span class="text-xs text-neutral-400 font-bold uppercase">Size</span>
                 <select id="font-size-select" class="bg-neutral-600 text-white text-xs rounded px-1 py-1 border border-neutral-500 focus:outline-none focus:border-blue-500">
@@ -265,21 +261,18 @@
     </header>
 
     <!-- Side-by-Side Search & Replace Panel -->
-    <div id="search-bar-panel" class="hidden bg-neutral-800 border-b border-neutral-700 px-4 py-2 flex items-center justify-between gap-3 text-sm z-20">
+    <div id="search-bar-panel" class="hidden bg-neutral-800 border-b border-neutral-700 px-4 py-2 flex items-center justify-between gap-3 text-sm z-20 shrink-0">
         <div class="flex items-center gap-3 flex-1 flex-wrap">
-            <!-- Search Field -->
             <div class="flex items-center gap-2 bg-neutral-900 border border-neutral-600 rounded px-2 py-1 flex-1 min-w-[200px]">
                 <i data-lucide="search" class="w-4 h-4 text-neutral-400"></i>
                 <input type="text" id="search-find-input" placeholder="Search for..." class="bg-transparent border-none outline-none text-white text-xs w-full">
             </div>
 
-            <!-- Replace Field (Side-by-Side) -->
             <div class="flex items-center gap-2 bg-neutral-900 border border-neutral-600 rounded px-2 py-1 flex-1 min-w-[200px]">
                 <i data-lucide="replace" class="w-4 h-4 text-neutral-400"></i>
                 <input type="text" id="search-replace-input" placeholder="Replace with..." class="bg-transparent border-none outline-none text-white text-xs w-full">
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex items-center gap-1">
                 <button id="search-prev-btn" class="p-1 hover:bg-neutral-700 text-neutral-300 rounded" title="Previous Match (Shift+Enter)">
                     <i data-lucide="chevron-up" class="w-4 h-4"></i>
@@ -298,20 +291,15 @@
     </div>
 
     <!-- Main Workspace -->
-    <main class="flex-1 flex overflow-hidden relative">
-        
-        <!-- Editor Container -->
-        <div id="editor-container" class="flex-1 relative w-full h-full bg-white">
-            <!-- CodeMirror Instance (Code Mode) -->
+    <main class="flex-1 flex overflow-hidden relative min-h-0 w-full">
+        <div id="editor-container" class="flex-1 relative w-full h-full bg-white min-h-0">
             <div id="cm-wrapper" class="h-full w-full">
                 <textarea id="code-editor"></textarea>
             </div>
 
-            <!-- Rich Text Instance (Visual Mode) -->
             <div id="rich-text-editor" contenteditable="true" class="hidden h-full w-full p-4"></div>
         </div>
 
-        <!-- Preview Pane (Used for HTML & Markdown) -->
         <div id="preview-pane" class="hidden flex-1 border-l border-neutral-700 bg-white relative">
             <div id="preview-tag" class="absolute top-0 right-0 bg-neutral-200 text-neutral-800 text-xs px-2 py-1 z-10 opacity-70">Live Preview</div>
             <iframe id="preview-frame" class="w-full h-full border-none"></iframe>
@@ -319,7 +307,7 @@
     </main>
 
     <!-- Footer / Status Bar -->
-    <footer class="bg-neutral-800 border-t border-neutral-700 text-xs text-neutral-400 p-1 px-4 flex justify-between items-center select-none">
+    <footer class="bg-neutral-800 border-t border-neutral-700 text-xs text-neutral-400 p-1 px-4 flex justify-between items-center select-none shrink-0">
         <div class="flex gap-4 items-center">
             <span id="cursor-pos">Ln 1, Col 1</span>
             <span id="doc-stats">0 Lines | 0 Words | 0 Chars</span>
@@ -337,8 +325,113 @@
         </div>
     </footer>
 
+    <!-- Full Documentation Modal Popup -->
+    <div id="docs-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-neutral-800 border border-neutral-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-neutral-700 flex items-center justify-between bg-neutral-900/50">
+                <div class="flex items-center gap-2 text-white font-bold text-lg">
+                    <i data-lucide="book-open" class="text-purple-400"></i>
+                    <span>Text&Code Edit+ — Full Documentation</span>
+                </div>
+                <button onclick="closeDocsModal()" class="p-1 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-md transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-48 bg-neutral-900/40 border-r border-neutral-700 p-2 flex flex-col gap-1 text-sm font-medium">
+                    <button onclick="switchTab('tab-overview')" id="nav-tab-overview" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-purple-400 bg-neutral-700/60">
+                        <i data-lucide="compass" class="w-4 h-4"></i> Overview
+                    </button>
+                    <button onclick="switchTab('tab-features')" id="nav-tab-features" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Main Features
+                    </button>
+                    <button onclick="switchTab('tab-modes')" id="nav-tab-modes" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="code" class="w-4 h-4"></i> Code & Data
+                    </button>
+                    <button onclick="switchTab('tab-richtext')" id="nav-tab-richtext" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Rich Text (.rtf)
+                    </button>
+                    <button onclick="switchTab('tab-search')" id="nav-tab-search" class="docs-tab-btn flex items-center gap-2 px-3 py-2 rounded-md text-left text-neutral-400 hover:bg-neutral-700/40 hover:text-white">
+                        <i data-lucide="search" class="w-4 h-4"></i> Search & Replace
+                    </button>
+                </div>
+
+                <div class="flex-1 p-6 overflow-y-auto text-sm leading-relaxed text-neutral-300">
+                    <div id="tab-overview" class="docs-tab-content space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Welcome to Text&Code Edit+</h2>
+                        <p><strong>Text&Code Edit+</strong> is a high-performance web-based editor built for both document drafting and full-stack software development. It blends a robust visual rich-text canvas with a full-featured CodeMirror editor supporting over 20 programming and data languages.</p>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-700/60">
+                                <h3 class="font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-blue-400"></i> Smart Language Engine</h3>
+                                <p class="text-xs text-neutral-400">Automatic syntax highlighting and extension detection for JS, Python, Rust, Go, C++, SQL, YAML, and more.</p>
+                            </div>
+                            <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-700/60">
+                                <h3 class="font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="hard-drive" class="w-4 h-4 text-green-400"></i> Automatic Local Persistence</h3>
+                                <p class="text-xs text-neutral-400">Every keystroke is preserved in local browser storage to prevent accidental data loss.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-features" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Core Features & Shortcuts</h2>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="wand-2" class="w-5 h-5 text-yellow-400 mt-0.5"></i>
+                                <div><strong class="text-white">Magic Wand Code Formatter:</strong> Automatically cleans up indentation in code modes, or parses and pretty-prints minified JSON structures with a single click.</div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="eye" class="w-5 h-5 text-blue-400 mt-0.5"></i>
+                                <div><strong class="text-white">Live Preview Pane:</strong> Real-time browser preview rendered for both HTML files and Markdown (.md) documents using <code class="bg-neutral-900 px-1 rounded">marked.js</code>.</div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="save" class="w-5 h-5 text-green-400 mt-0.5"></i>
+                                <div><strong class="text-white">Intelligent File Saving:</strong> Automatically attaches the correct extension based on active language selection.</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div id="tab-modes" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Supported Language Modes</h2>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-purple-400 block mb-1">Web Languages</strong>JavaScript (.js), HTML (.html), CSS (.css), PHP (.php)</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-blue-400 block mb-1">System & Application</strong>C++, C#, Java, Python (.py), Go, Rust (.rs), Ruby</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-green-400 block mb-1">Scripting & Markup</strong>Bash/Shell, PowerShell, Lua, Markdown (.md)</div>
+                            <div class="p-2 bg-neutral-900/40 rounded border border-neutral-700"><strong class="text-yellow-400 block mb-1">Data Formats</strong>JSON, CSV, XML, SQL, YAML (.yaml, .yml)</div>
+                        </div>
+                    </div>
+
+                    <div id="tab-richtext" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Rich Text Visual Document Editor</h2>
+                        <ul class="list-disc pl-5 space-y-1 text-xs text-neutral-300">
+                            <li><strong>Style Hierarchy:</strong> Normal Paragraphs, Title (H1), Subtitle (H2), Headings 1-3.</li>
+                            <li><strong>Typography:</strong> Bold, Italic, Underline, and Font Point Sizing.</li>
+                            <li><strong>Formatting:</strong> Alignment and Bulleted / Numbered lists.</li>
+                        </ul>
+                    </div>
+
+                    <div id="tab-search" class="docs-tab-content hidden space-y-4">
+                        <h2 class="text-xl font-bold text-white mb-2 border-b border-neutral-700 pb-2">Side-by-Side Search & Replace</h2>
+                        <p>Press <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Ctrl + F</kbd> (or <kbd class="bg-neutral-900 px-1.5 py-0.5 rounded text-white text-xs border border-neutral-700">Cmd + F</kbd>) to open the side-by-side panel.</p>
+                        <div class="p-3 bg-neutral-900/60 rounded border border-neutral-700 space-y-2 text-xs">
+                            <p>• <strong>Find Next:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> inside Search input or click Next Arrow.</p>
+                            <p>• <strong>Find Previous:</strong> Press <kbd class="bg-neutral-800 px-1 rounded">Shift + Enter</kbd> or click Up Arrow.</p>
+                            <p>• <strong>Replace Current:</strong> Click "Replace" or hit <kbd class="bg-neutral-800 px-1 rounded">Enter</kbd> in Replace input.</p>
+                            <p>• <strong>Replace All:</strong> Click "Replace All" to execute global document replacement.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-neutral-700 bg-neutral-900/80 flex justify-between items-center text-xs text-neutral-400">
+                <span>Text&Code Edit+ v2.5</span>
+                <button onclick="closeDocsModal()" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition">Close Documentation</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Link Modal -->
-    <div id="link-modal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div id="link-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-neutral-800 p-6 rounded-lg shadow-lg border border-neutral-700 w-96">
             <h3 class="text-white text-lg font-bold mb-4">Insert Link</h3>
             <input type="text" id="link-url-input" class="w-full bg-neutral-700 text-white border border-neutral-600 rounded px-3 py-2 mb-4 focus:outline-none focus:border-blue-500" placeholder="https://example.com">
@@ -350,13 +443,8 @@
     </div>
 
     <!-- Scripts -->
-    <!-- CodeMirror Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    
-    <!-- CodeMirror Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
-
-    <!-- CodeMirror Search API Addons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
 
     <!-- CodeMirror Modes -->
@@ -376,24 +464,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
-    
-    <!-- CodeMirror Addons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
 
     <script>
         function refreshIcons() {
-            if (window.lucide) {
-                lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openDocsModal() {
+            document.getElementById('docs-modal').classList.remove('hidden');
+            refreshIcons();
+        }
+
+        function closeDocsModal() {
+            document.getElementById('docs-modal').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.docs-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.docs-tab-btn').forEach(btn => {
+                btn.classList.remove('text-purple-400', 'bg-neutral-700/60');
+                btn.classList.add('text-neutral-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('text-purple-400', 'bg-neutral-700/60');
+                activeBtn.classList.remove('text-neutral-400');
             }
         }
-        refreshIcons();
 
         const saveConfig = {
             'text/javascript': { ext: '.js', mime: 'text/javascript' },
@@ -424,10 +523,6 @@
             lineNumbers: true,
             mode: 'null',
             theme: 'material-darker',
-            autoCloseBrackets: true,
-            autoCloseTags: true,
-            matchBrackets: true,
-            matchTags: {bothTags: true},
             styleActiveLine: true,
             lineWrapping: true,
             scrollbarStyle: "simple",
@@ -450,8 +545,9 @@ QUICK START GUIDE
    • Data Modes: Specialized handling for CSV, JSON, XML, and YAML.
 
 2. FEATURE HIGHLIGHTS
-   • Auto-Save: Automatically saves your progress locally so you never lose work.
    • Side-by-Side Find & Replace: Search and Replace boxes are placed right next to each other.
+   • Full Documentation: Click the "?" icon in the top bar anytime to open full documentation.
+   • Auto-Save: Automatically saves your progress locally so you never lose work.
    • Live Markdown & HTML Preview: Click the "Eye" button in Markdown or HTML modes.
    • Magic Wand: Formats and indents code or expands minified JSON cleanly.
 
@@ -472,7 +568,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         const modeDisplayEl = document.getElementById('mode-display');
         const formatBtn = document.getElementById('format-btn');
         const findBtn = document.getElementById('find-btn');
-        const loadGuideBtn = document.getElementById('load-guide-btn');
         const autosaveStatus = document.getElementById('autosave-status');
         
         const cmWrapper = document.getElementById('cm-wrapper');
@@ -489,7 +584,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         const undoBtn = document.getElementById('undo-btn');
         const redoBtn = document.getElementById('redo-btn');
 
-        // Search Panel Elements
         const searchBarPanel = document.getElementById('search-bar-panel');
         const searchFindInput = document.getElementById('search-find-input');
         const searchReplaceInput = document.getElementById('search-replace-input');
@@ -502,7 +596,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         let savedSelectionRange = null;
         let isPreviewActive = false;
 
-        // --- Side-by-Side Find & Replace Logic ---
         function toggleSearchBar(show = true) {
             if (show) {
                 searchBarPanel.classList.remove('hidden');
@@ -526,7 +619,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     editor.setSelection(cursor.from(), cursor.to());
                     editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
                 } else {
-                    // Wrap around to bottom
                     const endCursor = editor.getSearchCursor(query, CodeMirror.Pos(editor.lastLine()), { caseFold: true });
                     if (endCursor.findPrevious()) {
                         editor.setSelection(endCursor.from(), endCursor.to());
@@ -538,7 +630,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     editor.setSelection(cursor.from(), cursor.to());
                     editor.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
                 } else {
-                    // Wrap around to top
                     const startCursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
                     if (startCursor.findNext()) {
                         editor.setSelection(startCursor.from(), startCursor.to());
@@ -598,7 +689,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         });
 
-        // Global Keyboard Shortcut for Search (Ctrl+F / Cmd+F)
         window.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
@@ -606,7 +696,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         });
 
-        // --- Auto-Save to localStorage ---
         let autosaveTimer = null;
         function triggerAutoSave() {
             clearTimeout(autosaveTimer);
@@ -635,13 +724,11 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     themeSelect.value = data.theme;
                     applyTheme(data.theme);
                 }
-                
                 if (data.codeContent && data.codeContent.trim() !== '') {
                     editor.setValue(data.codeContent);
                 } else {
                     editor.setValue(defaultWelcomeText);
                 }
-                
                 if (data.richContent !== undefined) richTextEditor.innerHTML = data.richContent;
                 if (data.mode) {
                     languageSelect.value = data.mode;
@@ -652,19 +739,8 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         }
 
-        loadGuideBtn.addEventListener('click', () => {
-            if (confirm("Reset current editor content and reload the Quick Start Guide?")) {
-                localStorage.removeItem('textcode_edit_session');
-                filenameInput.value = "untitled.txt";
-                languageSelect.value = "null";
-                handleModeSwitch("null");
-                editor.setValue(defaultWelcomeText);
-            }
-        });
-
         function applyTheme(theme) {
             editor.setOption('theme', theme);
-            
             if (theme === 'material-darker') {
                 richTextEditor.classList.remove('bg-white', 'text-black');
                 richTextEditor.classList.add('bg-neutral-800', 'text-neutral-200', 'dark-mode');
@@ -729,7 +805,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                     editor.replaceSelection(text);
                 }
             } catch (err) {
-                alert("Paste was blocked by your browser. Please use the keyboard shortcut (Ctrl+V / Cmd+V).");
+                alert("Paste blocked by browser. Use Ctrl+V / Cmd+V.");
             }
         });
 
@@ -774,7 +850,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
         function highlightButton(id, isActive) {
             const btn = document.getElementById(id);
             if (!btn) return;
-            
             if (isActive) {
                 btn.classList.add('bg-neutral-500', 'text-white');
                 btn.classList.remove('text-neutral-300', 'hover:bg-neutral-600');
@@ -802,44 +877,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
              highlightButton('btn-list-ul', document.queryCommandState('insertUnorderedList'));
              highlightButton('btn-list-ol', document.queryCommandState('insertOrderedList'));
 
-             const selection = window.getSelection();
-             if (selection.rangeCount > 0) {
-                 let node = selection.anchorNode;
-                 if (node.nodeType === 3) node = node.parentNode;
-                 
-                 if (richTextEditor.contains(node) || node === richTextEditor) {
-                     while (node && node !== richTextEditor && !['H1','H2','H3','H4','H5','P','DIV'].includes(node.nodeName)) {
-                         node = node.parentNode;
-                     }
-                     if (node && node !== richTextEditor) {
-                         textStyleSelect.value = node.nodeName;
-                     } else {
-                         textStyleSelect.value = "P";
-                     }
-                 }
-             }
-
-             if (selection.rangeCount > 0) {
-                 let node = selection.anchorNode;
-                 if (richTextEditor.contains(node) || node === richTextEditor) {
-                     if (node.nodeType === 3) node = node.parentNode;
-                     
-                     const computedStyle = window.getComputedStyle(node);
-                     const fontSizePx = parseFloat(computedStyle.fontSize);
-                     const fontSizePt = Math.round(fontSizePx * 0.75);
-                     
-                     let found = false;
-                     for(let i=0; i<fontSizeSelect.options.length; i++) {
-                         if (fontSizeSelect.options[i].value == fontSizePt) {
-                             fontSizeSelect.selectedIndex = i;
-                             found = true;
-                             break;
-                         }
-                     }
-                     if (!found) fontSizeSelect.value = "";
-                 }
-             }
-
              const rtfText = richTextEditor.innerText || "";
              const lineCount = rtfText ? rtfText.split('\n').length : 0;
              const wordCount = calculateWordCount(rtfText);
@@ -851,14 +888,9 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             updateRTFToolbarState();
             triggerAutoSave();
         });
-        richTextEditor.addEventListener('keydown', () => {
-            setTimeout(updateRTFToolbarState, 10);
-        });
 
         fontSizeSelect.addEventListener('change', (e) => {
-            if (e.target.value) {
-                changeFontSize(e.target.value);
-            }
+            if (e.target.value) changeFontSize(e.target.value);
         });
 
         function openLinkModal() {
@@ -875,7 +907,7 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
 
             if (!savedSelectionRange || savedSelectionRange.collapsed) {
-                alert("Please select the text you want to link first.");
+                alert("Please select text to link first.");
                 return;
             }
 
@@ -935,7 +967,6 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
 
         formatBtn.addEventListener('click', () => {
             if (!richTextEditor.classList.contains('hidden')) return;
-            
             const mode = languageSelect.value;
             
             if (mode === 'application/json') {
@@ -988,18 +1019,11 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                         <html>
                         <head>
                             <style>
-                                body {
-                                    font-family: system-ui, -apple-system, sans-serif;
-                                    padding: 24px;
-                                    background-color: ${bg};
-                                    color: ${fg};
-                                    line-height: 1.6;
-                                }
+                                body { font-family: system-ui, sans-serif; padding: 24px; background-color: ${bg}; color: ${fg}; line-height: 1.6; }
                                 h1, h2, h3 { border-bottom: 1px solid rgba(156, 163, 175, 0.3); padding-bottom: 4px; }
                                 code { background: rgba(156, 163, 175, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
                                 pre code { display: block; padding: 12px; overflow-x: auto; }
                                 a { color: ${linkColor}; }
-                                blockquote { border-left: 4px solid #3b82f6; padding-left: 12px; margin-left: 0; opacity: 0.85; }
                             </style>
                         </head>
                         <body>${marked.parse(content)}</body>
@@ -1029,11 +1053,10 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
                 formatBtn.classList.add('hidden');
                 cursorPosEl.textContent = `Rich Text Mode`;
                 updateRTFToolbarState();
-
             } else {
                 if (!richTextEditor.classList.contains('hidden')) {
                     if (mode === 'text/html') {
-                         editor.setValue(richTextEditor.innerHTML);
+                        editor.setValue(richTextEditor.innerHTML);
                     } else {
                         editor.setValue(richTextEditor.innerText);
                     }
@@ -1167,10 +1190,13 @@ Start by typing below or use the "Folder" icon to open an existing file.`;
             }
         });
 
+        refreshIcons();
         applyTheme('material-darker'); 
         handleModeSwitch('null');
         restoreSession();
 
+        window.addEventListener('resize', () => editor.refresh());
+        setTimeout(() => editor.refresh(), 100);
     </script>
 </body>
 </html>
